@@ -3,7 +3,7 @@
  * Created by HAlex on 08/10/2017 21:01
  */
 
-class Loader2 {
+class Loader {
 
     /**
      * Include a class
@@ -28,7 +28,7 @@ function requireFileOnce($className) {
     require_once $className . ".php";
 }
 
-Loader2::load("kamebase/Boot");
+Loader::load("kamebase/Boot");
 Boot::matchRoutes($request);
 
 /*spl_autoload_register(function ($className) {
