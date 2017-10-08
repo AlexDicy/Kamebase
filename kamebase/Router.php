@@ -1,162 +1,176 @@
 <?php
 /**
- * Created by HAlex on 06/10/2017 17:08
+ * Created by HAlex on 08/10/2017 12:10
  */
+
+namespace kamebase;
 
 class Router {
 
+    /**
+     * Supported methods
+     * @var array
+     */
     public static $methods = ["GET", "POST", "HEAD", "PUT", "PATCH", "DELETE", "OPTIONS"];
 
-    public static function setRoute($methods, $route, $action) {
-        if (static::isController($action)) {
-            $action = static::toController($action);
+    /**
+     * Contains all the routes
+     * @var array
+     */
+    public static $routes = [];
+
+    /**
+     * Stores routes divided by method and uri, may contain duplicates
+     * @var array
+     */
+    public static $routesByMethod = [];
+
+    /**
+     * All the routes with a name will be stored here for a quick access
+     * @var array
+     */
+    public static $routesByName = [];
+
+    public static function addRoute($methods, $path, $settings) {
+        $route = new Route($methods, $path, $settings);
+        $url = $route->getHost().$route->getPath();
+
+        static::$routes[] = $route;
+
+        foreach ($methods as $method) {
+            static::$routesByMethod[$method][$url] = $route;
         }
 
-        $route = new Route($methods, trim($route, "/") ?: "/", $action);
+        if (isset($settings["name"])) {
+            static::$routesByName[$settings["name"]] = $route;
+        }
         return $route;
     }
-
-    public static function all($route, $action = null) {
-        return static::setRoute(static::$methods, $route, $action);
+    public static function all($path, $settings = null) {
+        return static::addRoute(static::$methods, $path, $settings);
     }
 
-    public static function get($route, $action = null) {
-        return static::setRoute(["GET", "HEAD"], $route, $action);
+    public static function get($path, $settings = null) {
+        return static::addRoute(["GET", "HEAD"], $path, $settings);
     }
 
-    public static function post($route, $action = null) {
-        return static::setRoute("POST", $route, $action);
+    public static function post($path, $settings = null) {
+        return static::addRoute("POST", $path, $settings);
     }
 
-    public static function put($route, $action = null) {
-        return static::setRoute("PUT", $route, $action);
+    public static function put($path, $settings = null) {
+        return static::addRoute("PUT", $path, $settings);
     }
 
-    public static function patch($route, $action = null) {
-        return static::setRoute("PATCH", $route, $action);
+    public static function patch($path, $settings = null) {
+        return static::addRoute("PATCH", $path, $settings);
     }
 
-    public static function delete($route, $action = null) {
-        return static::setRoute("DELETE", $route, $action);
+    public static function delete($path, $settings = null) {
+        return static::addRoute("DELETE", $path, $settings);
     }
 
-    public static function options($route, $action = null) {
-        return static::setRoute("OPTIONS", $route, $action);
+    public static function options($path, $settings = null) {
+        return static::addRoute("OPTIONS", $path, $settings);
     }
 
-    protected static function isController($action) {
-        if (!$action instanceof Closure) {
-            return is_string($action) || (isset($action["uses"]) && is_string($action["uses"]));
+    public static function match(Request $request) {
+        $routes = is_null($request->getMethod()) ? [] : static::$routesByMethod[$request->getMethod()];
+
+        $route = null;
+        foreach ($routes as $r) {
+            if ($r->matches($request)) {
+                $route = $r;
+                break;
+            }
         }
-        return false;
-    }
 
-    protected static function toController($action) {
-        if (is_string($action)) {
-            $action = ["uses" => $action];
+        if (!is_null($route)) {
+            return $route->execute($request);
         }
-        return $action;
+
+        /*
+        // If no route was found we will now check if a matching route is specified by
+        // another HTTP verb. If it is we will need to throw a MethodNotAllowed and
+        // inform the user agent of which HTTP verb it should use for this route.
+        $others = $this->checkForAlternateVerbs($request);
+
+        if (count($others) > 0) {
+            return $this->getRouteForMethods($request, $others);
+        }
+
+        throw new NotFoundHttpException;
+        */
     }
 
-    public static function compiler(Route $route) {
+    public static function setup(Route $route) {
         $hostVariables = array();
         $variables = array();
         $hostRegex = null;
         $hostTokens = array();
-
-        if ("" !== $host = $route->getHost()) {
-            $result = self::compilePattern($route, $host, true);
-
+        if ($host = $route->getHost() !== "") {
+            $result = self::setupPattern($route, $host, true);
             $hostVariables = $result["variables"];
             $variables = $hostVariables;
-
             $hostTokens = $result["tokens"];
             $hostRegex = $result["regex"];
         }
-
         $path = $route->getPath();
-
-        $result = self::compilePattern($route, $path, false);
-
+        $result = self::setupPattern($route, $path, false);
         $staticPrefix = $result["staticPrefix"];
-
         $pathVariables = $result["variables"];
-
         foreach ($pathVariables as $pathParam) {
             if ("_fragment" === $pathParam) {
-                throw new InvalidArgumentException(sprintf("Route pattern \"%s\" cannot contain \"_fragment\" as a path parameter.", $route->getPath()));
+                throw new \InvalidArgumentException("Route pattern \"{$route->getPath()}\" cannot contain \"_fragment\" as a path parameter.");
             }
         }
-
         $variables = array_merge($variables, $pathVariables);
-
         $tokens = $result["tokens"];
         $regex = $result["regex"];
-
-        return new CompiledRoute(
-            $staticPrefix,
-            $regex,
-            $tokens,
-            $pathVariables,
-            $hostRegex,
-            $hostTokens,
-            $hostVariables,
-            array_unique($variables)
-        );
+        return ["staticPrefix" => $staticPrefix,
+            "regex" => $regex,
+            "tokens" => $tokens,
+            "pathVariables" => $pathVariables,
+            "hostRegex" => $hostRegex,
+            "hostsTokens" => $hostTokens,
+            "hostVariables" => $hostVariables,
+            "variables" => array_unique($variables)
+        ];
     }
 
-    const REGEX_DELIMITER = '#';
-    const SEPARATORS = '/,;.:-_~+*=@|';
-    const VARIABLE_MAXIMUM_LENGTH = 32;
-
-    private static function compilePattern(Route $route, $pattern, $isHost) {
+    public static function setupPattern(Route $route, $pattern, $isHost) {
         $tokens = array();
         $variables = array();
         $matches = array();
         $pos = 0;
         $defaultSeparator = $isHost ? "." : "/";
-        $useUtf8 = preg_match("//u", $pattern);
-        $needsUtf8 = $route->getOption("utf8");
 
-        if (!$needsUtf8 && $useUtf8 && preg_match("/[\x80-\xFF]/", $pattern)) {
-            $needsUtf8 = true;
-            @trigger_error(sprintf("Using UTF-8 route patterns without setting the \"utf8\" option is deprecated since Symfony 3.2 and will throw a LogicException in 4.0. Turn on the \"utf8\" route option for pattern \"%s\".", $pattern), E_USER_DEPRECATED);
-        }
-        if (!$useUtf8 && $needsUtf8) {
-            throw new \LogicException(sprintf("Cannot mix UTF-8 requirements with non-UTF-8 pattern \"%s\".", $pattern));
-        }
+        $regexDelimiter = "#";
+        $separators = "/,;.:-_~+*=@|";
+        $variableMaximumLength = 32;
 
-        // Match all variables enclosed in "{}" and iterate over them. But we only want to match the innermost variable
-        // in case of nested "{}", e.g. {foo{bar}}. This in ensured because \w does not match "{" or "}" itself.
         preg_match_all("#\{\w+\}#", $pattern, $matches, PREG_OFFSET_CAPTURE | PREG_SET_ORDER);
         foreach ($matches as $match) {
             $varName = substr($match[0][0], 1, -1);
-            // get all static text preceding the current variable
             $precedingText = substr($pattern, $pos, $match[0][1] - $pos);
             $pos = $match[0][1] + strlen($match[0][0]);
 
             if (!strlen($precedingText)) {
                 $precedingChar = "";
-            } elseif ($useUtf8) {
+            } else {
                 preg_match("/.$/u", $precedingText, $precedingChar);
                 $precedingChar = $precedingChar[0];
-            } else {
-                $precedingChar = substr($precedingText, -1);
             }
-            $isSeparator = "" !== $precedingChar && false !== strpos(static::SEPARATORS, $precedingChar);
+            $isSeparator = "" !== $precedingChar && false !== strpos($separators, $precedingChar);
 
             // A PCRE subpattern name must start with a non-digit. Also a PHP variable cannot start with a digit so the
             // variable would not be usable as a Controller action argument.
-            if (preg_match("/^\d/", $varName)) {
-                throw new \DomainException(sprintf("Variable name \"%s\" cannot start with a digit in route pattern \"%s\". Please use a different name.", $varName, $pattern));
-            }
-            if (in_array($varName, $variables)) {
-                throw new \LogicException(sprintf("Route pattern \"%s\" cannot reference variable name \"%s\" more than once.", $pattern, $varName));
-            }
-
-            if (strlen($varName) > self::VARIABLE_MAXIMUM_LENGTH) {
-                throw new \DomainException(sprintf("Variable name \"%s\" cannot be longer than %s characters in route pattern \"%s\". Please use a shorter name.", $varName, self::VARIABLE_MAXIMUM_LENGTH, $pattern));
-            }
+            if (preg_match("/^\d/", $varName))
+                throw new \InvalidArgumentException("Variable name \"$varName\" cannot start with a digit in route pattern \"$pattern\". Please use a different name.");
+            if (in_array($varName, $variables))
+                throw new \InvalidArgumentException("Route pattern \"$pattern\" cannot reference variable name \"$varName\" more than once.");
+            if (strlen($varName) > $variableMaximumLength)
+                throw new \InvalidArgumentException("Variable name \"$varName\" cannot be longer than $variableMaximumLength characters in route pattern \"$pattern\". Please use a shorter name.");
 
             if ($isSeparator && $precedingText !== $precedingChar) {
                 $tokens[] = array("text", substr($precedingText, 0, -strlen($precedingChar)));
@@ -164,7 +178,7 @@ class Router {
                 $tokens[] = array("text", $precedingText);
             }
 
-            $regexp = $route->getRequirement($varName);
+            $regexp = $route->getWhere($varName);
             if (null === $regexp) {
                 $followingPattern = (string)substr($pattern, $pos);
                 // Find the next static character after the variable that functions as a separator. By default, this separator and "/"
@@ -174,12 +188,8 @@ class Router {
                 // If {page} would also match the separating dot, {_format} would never match as {page} will eagerly consume everything.
                 // Also even if {_format} was not optional the requirement prevents that {page} matches something that was originally
                 // part of {_format} when generating the URL, e.g. _format = "mobile.html".
-                $nextSeparator = self::findNextSeparator($followingPattern, $useUtf8);
-                $regexp = sprintf(
-                    "[^%s%s]+",
-                    preg_quote($defaultSeparator, self::REGEX_DELIMITER),
-                    $defaultSeparator !== $nextSeparator && "" !== $nextSeparator ? preg_quote($nextSeparator, self::REGEX_DELIMITER) : ""
-                );
+                $nextSeparator = self::findNextSeparator($followingPattern, $separators);
+                $regexp = sprintf("[^%s%s]+", preg_quote($defaultSeparator, $regexDelimiter), $defaultSeparator !== $nextSeparator && "" !== $nextSeparator ? preg_quote($nextSeparator, $regexDelimiter) : "");
                 if (("" !== $nextSeparator && !preg_match("#^\{\w+\}#", $followingPattern)) || "" === $followingPattern) {
                     // When we have a separator, which is disallowed for the variable, we can optimize the regex with a possessive
                     // quantifier. This prevents useless backtracking of PCRE and improves performance by 20% for matching those patterns.
@@ -187,16 +197,6 @@ class Router {
                     // after it. This optimization cannot be applied when the next char is no real separator or when the next variable is
                     // directly adjacent, e.g. "/{x}{y}".
                     $regexp .= "+";
-                }
-            } else {
-                if (!preg_match("//u", $regexp)) {
-                    $useUtf8 = false;
-                } elseif (!$needsUtf8 && preg_match("/[\x80-\xFF]|(?<!\\\\)\\\\(?:\\\\\\\\)*+(?-i:X|[pP][\{CLMNPSZ]|x\{[A-Fa-f0-9]{3})/", $regexp)) {
-                    $needsUtf8 = true;
-                    @trigger_error(sprintf("Using UTF-8 route requirements without setting the \"utf8\" option is deprecated since Symfony 3.2 and will throw a LogicException in 4.0. Turn on the \"utf8\" route option for variable \"%s\" in pattern \"%s\".", $varName, $pattern), E_USER_DEPRECATED);
-                }
-                if (!$useUtf8 && $needsUtf8) {
-                    throw new \LogicException(sprintf("Cannot mix UTF-8 requirement with non-UTF-8 charset for variable \"%s\" in pattern \"%s\".", $varName, $pattern));
                 }
             }
 
@@ -226,17 +226,7 @@ class Router {
         for ($i = 0, $nbToken = count($tokens); $i < $nbToken; ++$i) {
             $regexp .= self::computeRegexp($tokens, $i, $firstOptional);
         }
-        $regexp = self::REGEX_DELIMITER . "^" . $regexp . "$" . self::REGEX_DELIMITER . "s" . ($isHost ? "i" : "");
-
-        // enable Utf8 matching if really required
-        if ($needsUtf8) {
-            $regexp .= "u";
-            for ($i = 0, $nbToken = count($tokens); $i < $nbToken; ++$i) {
-                if ("variable" === $tokens[$i][0]) {
-                    $tokens[$i][] = true;
-                }
-            }
-        }
+        $regexp = "#^" . $regexp . "$#s" . ($isHost ? "i" : "");
 
         return array(
             "staticPrefix" => self::determineStaticPrefix($route, $tokens),
@@ -244,5 +234,66 @@ class Router {
             "tokens" => array_reverse($tokens),
             "variables" => $variables,
         );
+    }
+
+    private static function findNextSeparator($pattern, $separators) {
+        if ($pattern == "") {
+            // return empty string if pattern is empty or false (false which can be returned by substr)
+            return "";
+        }
+        // first remove all placeholders from the pattern so we can find the next real static character
+        if ($pattern = preg_replace('#\{\w+\}#', "", $pattern) === "") {
+            return "";
+        }
+        preg_match("/^./u", $pattern, $pattern);
+        return false !== strpos($separators, $pattern[0]) ? $pattern[0] : "";
+    }
+
+    /**
+     * Computes the regexp used to match a specific token. It can be static text or a subpattern.
+     *
+     * @param array $tokens        The route tokens
+     * @param int   $index         The index of the current token
+     * @param int   $firstOptional The index of the first optional token
+     *
+     * @return string The regexp pattern for a single token
+     */
+    private static function computeRegexp(array $tokens, $index, $firstOptional) {
+        $token = $tokens[$index];
+        if ($token[0] === "text") {
+            // Text tokens
+            return preg_quote($token[1], "#");
+        } else {
+            // Variable tokens
+            if (0 === $index && 0 === $firstOptional) {
+                // When the only token is an optional variable token, the separator is required
+                return preg_quote($token[1], "#") . "(?P<{$token[3]}>{$token[2]})?";
+            } else {
+                $regexp = preg_quote($token[1], "#") . "(?P<{$token[3]}>{$token[2]})";
+                if ($index >= $firstOptional) {
+                    // Enclose each optional token in a subpattern to make it optional.
+                    // "?:" means it is non-capturing, i.e. the portion of the subject string that
+                    // matched the optional subpattern is not passed back.
+                    $regexp = "(?:$regexp";
+                    $nbTokens = count($tokens);
+                    if ($nbTokens - 1 == $index) {
+                        // Close the optional subpatterns
+                        $regexp .= str_repeat(")?", $nbTokens - $firstOptional - (0 === $firstOptional ? 1 : 0));
+                    }
+                }
+                return $regexp;
+            }
+        }
+    }
+
+    private static function determineStaticPrefix(Route $route, array $tokens) {
+        if ($tokens[0][0] !== "text") {
+            return ($route->hasDefault($tokens[0][3]) || "/" === $tokens[0][1]) ? "" : $tokens[0][1];
+        }
+        $prefix = $tokens[0][1];
+        if (isset($tokens[1][1]) && $tokens[1][1] !== "/" && $route->hasDefault($tokens[1][3]) === false) {
+            $prefix .= $tokens[1][1];
+        }
+        return $prefix;
     }
 }

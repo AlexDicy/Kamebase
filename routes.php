@@ -3,6 +3,8 @@
  * Created by HAlex on 06/10/2017 17:07
  */
 
+use kamebase\Router;
+
 Router::get("/", "Hello");
 
 Router::post("/", "Hello");
