@@ -32,8 +32,9 @@ class Router {
     public static $routesByName = [];
 
     public static function addRoute($methods, $path, $settings) {
+        $methods = (array) $methods;
         $route = new Route($methods, $path, $settings);
-        $url = $route->getHost().$route->getPath();
+        $url = $route->getHost() . $route->getPath();
 
         static::$routes[] = $route;
 
@@ -41,11 +42,12 @@ class Router {
             static::$routesByMethod[$method][$url] = $route;
         }
 
-        if (isset($settings["name"])) {
+        if (is_array($settings) && isset($settings["name"])) {
             static::$routesByName[$settings["name"]] = $route;
         }
         return $route;
     }
+
     public static function all($path, $settings = null) {
         return static::addRoute(static::$methods, $path, $settings);
     }
@@ -75,7 +77,7 @@ class Router {
     }
 
     public static function match(Request $request) {
-        $routes = is_null($request->getMethod()) ? [] : static::$routesByMethod[$request->getMethod()];
+        $routes = is_null($request->getMethod()) ? [] : self::getOrDefault(static::$routesByMethod, $request->getMethod(), []);
 
         $route = null;
         foreach ($routes as $r) {
@@ -102,6 +104,12 @@ class Router {
         throw new NotFoundHttpException;
         */
     }
+
+    public static function getOrDefault(array $array, $key, $default = null) {
+        if (array_key_exists($key, $array) && $array[$key] !== null) return $array[$key];
+        return $default;
+    }
+
 
     public static function setup(Route $route) {
         $hostVariables = array();
@@ -252,9 +260,9 @@ class Router {
     /**
      * Computes the regexp used to match a specific token. It can be static text or a subpattern.
      *
-     * @param array $tokens        The route tokens
-     * @param int   $index         The index of the current token
-     * @param int   $firstOptional The index of the first optional token
+     * @param array $tokens The route tokens
+     * @param int $index The index of the current token
+     * @param int $firstOptional The index of the first optional token
      *
      * @return string The regexp pattern for a single token
      */

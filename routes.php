@@ -5,11 +5,17 @@
 
 use kamebase\Router;
 
-Router::get("/", "Hello");
+Router::get("/", "Index");
 
-Router::post("/", "Hello");
-Router::put("/", "Hello");
-Router::delete("/", "Hello");
-Router::patch("/", "Hello");
-Router::options("/", "Hello");
-Router::all("/{id}", "Hello")->where("id", "[0-9]");
+Router::post("/", "Index POST");
+Router::put("/", "Index PUT");
+Router::delete("/", "Index DELETE");
+Router::patch("/", "Index PATCH");
+Router::options("/", "Index OPTIONS");
+
+
+
+Router::all("/page", "Page ID...");
+Router::all("/page/{id}/section/{section}", function ($id, $sec) {
+    echo "ID della pagina: " . $id . ", sezione: " . $sec;
+})->where(["id" => "[0-9]+", "section" => "[a-zA-Z]+"]);

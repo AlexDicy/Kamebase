@@ -99,8 +99,8 @@ class Route {
     public function setSettings($settings, $path) {
         if (is_null($settings)) throw new \UnexpectedValueException("This route [$path] has no settings");
 
-        // if the third argument is a function, store it as the action
-        if (is_callable($settings)) {
+        // if the seconds argument is a function, store it as the action
+        if (is_callable($settings) || is_string($settings)) {
             $this->settings["action"] = $settings;
             return;
         }
@@ -170,7 +170,7 @@ class Route {
 
     public function matches(Request $request) {
         $this->getPattern();
-        $path = $request->path(); // page/4 -- requested path
+        $path = $request->getPath(); // /page/4 -- requested path
 
         if (preg_match($this->pattern["regex"], rawurldecode($path))
             && (is_null($this->pattern["hostRegex"]) || preg_match($this->pattern["hostRegex"], $request->getHost()))) {
@@ -191,6 +191,7 @@ class Route {
         if (is_string($callable)) {
             // TODO: run Controller@method
             //$controller->{$method}(...array_values($parameters));
+            echo $callable;
         }
         return null;
     }
@@ -212,7 +213,7 @@ class Route {
 
     protected function replaceDefaults(array $parameters) {
         foreach ($parameters as $key => $value) {
-            $parameters[$key] = $value ?: $this->defaults[$key];
+            $parameters[$key] = $value ?? $this->defaults[$key];
         }
 
         foreach ($this->defaults as $key => $value) {
@@ -231,15 +232,15 @@ class Route {
         return $this->controller;
     }
 
-    protected function bindPathParameters($request) {
-        $path = "/" . ltrim(rawurldecode($request->path()), "/");
+    protected function bindPathParameters(Request $request) {
+        $path = rawurldecode($request->getPath());
 
         preg_match($this->pattern["regex"], $path, $matches);
 
         return $this->matchToKeys(array_slice($matches, 1));
     }
 
-    protected function bindHostParameters($request, $parameters) {
+    protected function bindHostParameters(Request $request, $parameters) {
         preg_match($this->pattern["hostRegex"], $request->getHost(), $matches);
         return array_merge($this->matchToKeys(array_slice($matches, 1)), $parameters);
     }
