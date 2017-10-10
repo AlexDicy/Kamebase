@@ -123,7 +123,7 @@ class Router {
             $hostTokens = $result["tokens"];
             $hostRegex = $result["regex"];
         }
-        $path = $route->getPath();
+        $path = preg_replace('/\{(\w+?)\?\}/', '{$1}', $route->getPath());
         $result = self::setupPattern($route, $path, false);
         $staticPrefix = $result["staticPrefix"];
         $pathVariables = $result["variables"];
