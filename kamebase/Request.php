@@ -207,4 +207,8 @@ class Request {
 
         return $this->content;
     }
+
+    public function getServer() {
+        return $this->server;
+    }
 }

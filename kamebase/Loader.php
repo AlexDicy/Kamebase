@@ -9,6 +9,18 @@ use kamebase\Request;
 
 class Loader {
 
+    public static function handle() {
+        try {
+            $request = new Request(true);
+            $response = Boot::matchRoutes($request);
+            $response->send();
+        } catch (Exception $e) {
+            echo $e;
+        } catch (Throwable $e) {
+            echo $e;
+        }
+    }
+
     /**
      * Include a class
      *
@@ -35,9 +47,7 @@ spl_autoload_register(function ($className) {
 
 Loader::loadWithPrefix("kamebase", "Boot", "Request");
 Loader::load("routes");
-
-$request = new Request(true);
-Boot::matchRoutes($request);
+Loader::handle();
 
 
 

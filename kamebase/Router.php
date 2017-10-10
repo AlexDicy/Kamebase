@@ -88,6 +88,7 @@ class Router {
         }
 
         if (!is_null($route)) {
+            $request->setRoute($route);
             return $route->execute($request);
         }
 
@@ -221,7 +222,7 @@ class Router {
         if (!$isHost) {
             for ($i = count($tokens) - 1; $i >= 0; --$i) {
                 $token = $tokens[$i];
-                if ("variable" === $token[0] && $route->hasDefault($token[3])) {
+                if ($token[0] === "variable" && $route->hasOptional($token[3])) {
                     $firstOptional = $i;
                 } else {
                     break;
@@ -296,10 +297,10 @@ class Router {
 
     private static function determineStaticPrefix(Route $route, array $tokens) {
         if ($tokens[0][0] !== "text") {
-            return ($route->hasDefault($tokens[0][3]) || "/" === $tokens[0][1]) ? "" : $tokens[0][1];
+            return ($route->hasOptional($tokens[0][3]) || "/" === $tokens[0][1]) ? "" : $tokens[0][1];
         }
         $prefix = $tokens[0][1];
-        if (isset($tokens[1][1]) && $tokens[1][1] !== "/" && $route->hasDefault($tokens[1][3]) === false) {
+        if (isset($tokens[1][1]) && $tokens[1][1] !== "/" && $route->hasOptional($tokens[1][3]) === false) {
             $prefix .= $tokens[1][1];
         }
         return $prefix;

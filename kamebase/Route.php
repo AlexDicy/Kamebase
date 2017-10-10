@@ -34,17 +34,25 @@ class Route {
     public $parameterNames;
 
     /**
-     * If a variable isn't filled but is required we can use the defaults array to get a value
+     * Stores the default value for variables that are not required
      *
-     * ("id" => 0, "page" => 1)
+     * ("id" => 0, "page" => "default")
      * @var array
      */
     public $defaults = [];
 
     /**
+     * Stores the variables that are not required
+     *
+     * ("id", "page")
+     * @var array
+     */
+    public $optionals = [];
+
+    /**
      * Different requirement for a key
      *
-     * ("id" => "[0-9]")
+     * ("id" => "[0-9]+")
      * @var array
      */
     public $expressions = [];
@@ -86,6 +94,7 @@ class Route {
         $this->setMethods($methods);
         $this->setPath($path);
         $this->setSettings($settings, $path);
+        $this->setOptionals();
     }
 
     public function setMethods($methods) {
@@ -159,9 +168,22 @@ class Route {
         return $this;
     }
 
+    public function defaults($key, $default = null) {
+        if (is_array($key)) $this->defaults = $key;
+        else $this->defaults[$key] = $default;
+
+        return $this;
+    }
+
+    public function default($key, $default = null) {
+        return $this->defaults($key, $default);
+    }
+
     public function where($key, $expression = null) {
         if (is_array($key)) $this->expressions = $key;
         else $this->expressions[$key] = $expression;
+
+        return $this;
     }
 
     public function getWhere($key) {
@@ -191,7 +213,7 @@ class Route {
         if (is_string($callable)) {
             // TODO: run Controller@method
             //$controller->{$method}(...array_values($parameters));
-            echo $callable;
+            return $callable;
         }
         return null;
     }
@@ -223,6 +245,15 @@ class Route {
         }
 
         return $parameters;
+    }
+
+    public function setOptionals() {
+        preg_match_all('/\{(\w+?)\?\}/', $this->getPath(), $matches);
+        $this->optionals = isset($matches[1]) ? array_fill_keys($matches[1], null) : [];
+    }
+
+    public function hasOptional($name) {
+        return array_key_exists($name, $this->optionals);
     }
 
     public function getController() {
@@ -270,10 +301,6 @@ class Route {
 
     public function getVariable($name, $default = null) {
         return isset($this->variables[$name]) ? $this->variables[$name] : $default;
-    }
-
-    public function hasDefault($name) {
-        return isset($this->defaults[$name]);
     }
 
     /**

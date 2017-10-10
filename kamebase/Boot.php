@@ -7,7 +7,7 @@ namespace kamebase;
 
 class Boot {
     public static function matchRoutes(Request $request) {
-        $route = Router::match($request);
-        $request->setRoute($route);
+        $content = Router::match($request);
+        return new Response($request, $content);
     }
 }

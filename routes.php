@@ -18,6 +18,10 @@ Router::options("/", "Index OPTIONS");
 Router::all("/page", "Page");
 
 
-Router::all("/page/{id}/section/{section}", function ($id, $sec) {
-    echo "ID della pagina: " . $id . ", sezione: " . $sec;
-})->where(["id" => "[0-9]+", "section" => "[a-zA-Z-]+"]);
+Router::all("/page/{id}/section/{section?}", function ($id, $sec) {
+    return ["id" => $id, "section" => $sec, "message" => "ID della pagina: " . $id . ", sezione: " . $sec];
+})->where(
+    ["id" => "[0-9]+", "section" => "[a-zA-Z-]+"]
+)->defaults(
+    "section", "not-set"
+);
