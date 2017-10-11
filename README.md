@@ -42,3 +42,5 @@ Router::all("/page/{id}/section/{section?}", function ($id, $sec) {
     "section", "not-set"
 );
 ```
+
+P.S. I don't like PSR-4 or -0 or fu*king functions that have the fuc*king parentheses in the new line
