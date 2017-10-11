@@ -43,4 +43,4 @@ Router::all("/page/{id}/section/{section?}", function ($id, $sec) {
 );
 ```
 
-P.S. I don't like PSR-4 or -0 or fu*king functions that have the fuc*king parentheses in the new line
+P.S. I don't like PSR-4 or -0 or fu\*king functions that have the fuc\*king parentheses in the new line
