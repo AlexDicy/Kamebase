@@ -88,6 +88,23 @@ class Response {
         511 => "Network Authentication Required",                             // RFC6585
     );
 
+    public static $notToEncode = [
+        "%2F" => "/",
+        "%40" => "@",
+        "%3A" => ":",
+        "%3B" => ";",
+        "%2C" => ",",
+        "%3D" => "=",
+        "%2B" => "+",
+        "%21" => "!",
+        "%2A" => "*",
+        "%7C" => "|",
+        "%3F" => "?",
+        "%26" => "&",
+        "%23" => "#",
+        "%25" => "%",
+    ];
+
     public $protocolVersion = "1.0";
 
     public $content;
@@ -164,6 +181,10 @@ class Response {
         if (!headers_sent()) {
             header("HTTP/" . $this->protocolVersion . " " . $this->statusCode . " " . $this->statusText, true, $this->statusCode);
             header("Content-Type: " . $this->contentType . "; charset=UTF-8", true);
+
+            foreach ($this->headers as $key => $value) {
+                header($key . ": " . $value, true);
+            }
         }
     }
 

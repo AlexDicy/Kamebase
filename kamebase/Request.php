@@ -7,6 +7,8 @@ namespace kamebase;
 
 class Request {
 
+    public static $mainRequest = null;
+
     protected $get;
     protected $post;
     protected $attributes;
@@ -63,6 +65,14 @@ class Request {
         $this->path = null;
         $this->method = null;
         $this->currentRoute = null;
+    }
+
+    public static function getMainRequest() {
+        return self::$mainRequest;
+    }
+
+    public static function setMainRequest(Request $request) {
+        self::$mainRequest = $request;
     }
 
     public function getPath() {
@@ -210,5 +220,13 @@ class Request {
 
     public function getServer() {
         return $this->server;
+    }
+
+    public function getPost() {
+        return $this->post;
+    }
+
+    public function getGet() {
+        return $this->get;
     }
 }

@@ -7,7 +7,20 @@ namespace kamebase;
 
 class Boot {
     public static function matchRoutes(Request $request) {
+        Request::setMainRequest($request);
         $content = Router::match($request);
-        return new Response($request, $content);
+        $response = null;
+
+        if ($content instanceof Response) {
+            return $content;
+        } else {
+            $response = new Response($request, $content);
+        }
+
+        if (is_null($content)) {
+            $response->setStatusCode(404);
+        }
+
+        return $response;
     }
 }
