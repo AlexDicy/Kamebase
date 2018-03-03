@@ -5,12 +5,14 @@
 
 namespace kamebase;
 
+use Session;
+
 class Route {
 
     /**
      * If this route has a name, it will be stored here
      *
-     * ("as" => "name")
+     * ("name" => "name")
      * @var string
      */
     public $name = null;
@@ -88,7 +90,13 @@ class Route {
      * Contains the Controller class if we have one
      * @var string|null
      */
-    public $controller;
+    public $controllerParts;
+
+    /**
+     * If set, requires the user to be logged in and the account level must match
+     * @var int
+     */
+    public $levelRequired;
 
     public function __construct($methods, $path, $settings) {
         $this->setMethods($methods);
@@ -190,13 +198,25 @@ class Route {
         return isset($this->expressions[$key]) ? $this->expressions[$key] : null;
     }
 
+    public function name($name) {
+        $this->name = $name;
+        Router::addRouteByName($name, $this);
+
+        return $this;
+    }
+
+    public function level(int $level) {
+        $this->levelRequired = $level;
+        return $this;
+    }
+
     public function matches(Request $request) {
         $this->getPattern();
         $path = $request->getPath(); // /page/4 -- requested path
 
         if (preg_match($this->pattern["regex"], rawurldecode($path))
             && (is_null($this->pattern["hostRegex"]) || preg_match($this->pattern["hostRegex"], $request->getHost()))) {
-            return true;
+            return isset($this->levelRequired) ? Session::getLevel() >= $this->levelRequired : true;
         }
         return false;
     }
@@ -204,6 +224,7 @@ class Route {
     public function execute(Request $request) {
         $this->getPattern();
         $this->variables = $this->parseVariables($request);
+        $this->variables["_request"] = $request;
         $callable = $this->settings["action"];
 
         if (is_callable($callable)) {
@@ -211,8 +232,12 @@ class Route {
         }
 
         if (is_string($callable)) {
-            // TODO: run Controller@method
-            //$controller->{$method}(...array_values($parameters));
+            if ($this->isController($callable)) {
+                $parts = $this->getControllerParts();
+                $controller = new $parts[0];
+
+                return $controller->{$parts[1]}(...array_values($this->variables));
+            }
             return $callable;
         }
         return null;
@@ -256,11 +281,16 @@ class Route {
         return array_key_exists($name, $this->optionals);
     }
 
-    public function getController() {
-        if (!$this->controller) {
-            $this->controller = explode("@", $this->settings["action"], 2)[0];
+    public function getControllerParts() {
+        if (!$this->controllerParts) {
+            $this->controllerParts = explode("@", $this->settings["action"], 2);
+            $this->controllerParts[0] = "\controllers\\" . $this->controllerParts[0];
         }
-        return $this->controller;
+        return $this->controllerParts;
+    }
+
+    public function isController($string) {
+        return $string != $this->getControllerParts()[0];
     }
 
     protected function bindPathParameters(Request $request) {

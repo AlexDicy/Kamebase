@@ -104,6 +104,42 @@ class Router {
 
         throw new NotFoundHttpException;
         */
+        return null;
+    }
+
+    public static function getUrl($routeName, $parameters = null, $default = "/") {
+        if (isset(static::$routesByName[$routeName])) {
+            $url = static::$routesByName[$routeName]->getPath();
+            if (is_array($parameters)) {
+                $path = preg_replace_callback("/\\{.*?\\}/", function ($match) use (&$parameters) {
+                    return (empty($parameters) && !(substr($match[0], -2) === "?}")) ? $match[0] : array_shift($parameters);
+                }, $url);
+
+                $url = trim(preg_replace("/\\{.*?\\?\\}/", "", $path), "/");
+            }
+            return strtr(rawurlencode($url), Response::$notToEncode);
+        }
+        return $default;
+    }
+
+    public static function redirect($url = "/") {
+        return new Response(Request::getMainRequest(), "", 302, ["Location" => $url]);
+    }
+
+    public static function toRoute($routeName, $parameters = null) {
+        $url = self::getUrl($routeName);
+        if (is_array($parameters)) {
+            $path = preg_replace_callback("/\\{.*?\\}/", function ($match) use (&$parameters) {
+                return (empty($parameters) && !(substr($match[0], -2) === "?}")) ? $match[0] : array_shift($parameters);
+            }, $url);
+
+            $url = trim(preg_replace("/\\{.*?\\?\\}/", "", $path), "/");
+        }
+        return self::redirect($url);
+    }
+
+    public static function addRouteByName($name, Route $route) {
+        static::$routesByName[$name] = $route;
     }
 
     public static function getOrDefault(array $array, $key, $default = null) {
