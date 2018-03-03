@@ -1,1 +1,10 @@
+# IDE files
 .idea/
+
+# Generated templates
+kamebase/layout/cache
+
+# User data
+templates
+routes.php
+Config.php

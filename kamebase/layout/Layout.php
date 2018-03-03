@@ -6,6 +6,9 @@
 namespace kamebase\layout;
 
 
+use RecursiveDirectoryIterator;
+use RecursiveIteratorIterator;
+
 class Layout {
 
     public static function load($name, $data = array()) {
@@ -18,6 +21,30 @@ class Layout {
             return ltrim(ob_get_clean());
         } catch (\Exception $e) {
             return null;
+        }
+    }
+
+    public static function cacheTemplates() {
+        $files = [];
+        $folder = "templates";
+        $folderLen = strlen($folder) + 1;
+        if (!file_exists($folder)) return;
+        $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($folder));
+
+        foreach ($iterator as $file) {
+            if (!$file->isDir()) {
+                $name = $file->getPathname();
+                $name = substr($name, $folderLen, strlen($name));
+                $name = substr($name, 0, -strlen(strrchr($name, ".")));
+                $files[] = preg_replace("/[\/\\\]/", ".", $name);
+            }
+        }
+
+        foreach ($files as $file) {
+            $parser = new Parser($file);
+            $parser->removeComments();
+            $parser->replaceData();
+            $parser->writeLayout();
         }
     }
 }
