@@ -1,6 +1,7 @@
 <?php
 
 use kamebase\Boot;
+use kamebase\database\DB;
 use kamebase\Request;
 
 /**
@@ -44,10 +45,23 @@ spl_autoload_register(function ($className) {
 
 
 
-
 Loader::loadWithPrefix("kamebase", "Boot", "Request");
+Loader::loadWithPrefix("kamebase/session", "Session");
+
+Session::start();
+
 Loader::load("routes");
+Loader::load("kamebase/functions");
+
+if (kamebase\Config::getConfig()->hasDbData()) {
+    $data = kamebase\Config::getConfig()->getDbData();
+    DB::setConnection($data["host"], $data["user"], $data["password"], $data["database"]);
+    Session::reload();
+}
+
 Loader::handle();
+
+Session::save();
 
 
 
@@ -58,6 +72,7 @@ function includeFileOnce($className) {
 }
 
 function requireFileOnce($className) {
+    $className = str_replace("\\", "/", $className);
     require_once $className . ".php";
 }
 
