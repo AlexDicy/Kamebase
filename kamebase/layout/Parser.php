@@ -9,6 +9,10 @@ namespace kamebase\layout;
 class Parser {
     const REGEX_COMMENTS = "/([^\"']|^)((\/\*[\s\S]+?\*\/)|((\/\/|#).+))/";
     const REGEX_INCLUDE = "/{[\s]*include (\S*)[\s]*}/";
+    const REGEX_SECTION = "/{[\s]*section (\S*)[\s]*}/";
+    const REGEX_EXTENDS = "/{[\s]*extend[s]? (\S*)?[\s]*}/";
+    const REGEX_EXTENDED = "/<\?php[\s]*extend[\s]*\(\"(\S*)?\"\)[;]?[\s]* \?>/";
+    const REGEX_CSS = "/{[\s]*css (\S*)[\s]*}/";
     const REGEX_FUNC = "/{[\s]*(\S*)\(\)[\s]*}/";
     const REGEX_VAR = "/({)(.+?)(})/";
 
@@ -28,9 +32,17 @@ class Parser {
     }
 
     public function replaceData() {
+        // TODO: sanitize input
         $this->data = preg_replace(self::REGEX_INCLUDE, "<?php require \"$1.php\" ?>", $this->data);
+        $this->data = preg_replace(self::REGEX_EXTENDS, "<?php extend(\"$1\") ?>", $this->data);
+        $this->data = preg_replace(self::REGEX_SECTION, "<?= section(\"$1\") ?>", $this->data);
+        $this->data = preg_replace(self::REGEX_CSS, "<?php requireStyle(\"$1\") ?>", $this->data);
         $this->data = preg_replace(self::REGEX_FUNC, "<?= $1() ?>", $this->data);
         $this->data = preg_replace(self::REGEX_VAR, "<?= \$$2 ?>", $this->data);
+
+        if (preg_match(self::REGEX_EXTENDED, $this->data, $matches) > 0) {
+            $this->data .= "\n<?php stopExtend(\"" . $matches[1] . "\"); ?>";
+        }
     }
 
     public function writeLayout($folder) {

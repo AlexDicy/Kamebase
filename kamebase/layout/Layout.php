@@ -10,25 +10,40 @@ use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 
 class Layout {
+    private static $prefix = "";
+
+    private static $styles = [];
+    private static $extended = [];
+    private static $sections = [];
+    private static $currentFile = "";
 
     public static function load($name, $data = array()) {
         try {
-            $layoutName = str_replace(".", "/", $name);
-            $data["layoutName"] = $layoutName;
+            $data["templateName"] = $name;
             ob_start();
             extract($data, EXTR_SKIP);
-            include "layout/base.php";
+            /** @noinspection PhpIncludeInspection */
+            include self::getFilename($name);
             return ltrim(ob_get_clean());
         } catch (\Exception $e) {
             return null;
         }
     }
 
-    public static function cacheTemplates() {
+    // Websites with many files will struggle some second on the first load
+    public static function cacheTemplates($force = false) {
         $files = [];
         $folder = "templates";
         $folderLen = strlen($folder) + 1;
-        if (!file_exists($folder)) return;
+        $outputFolder = "kamebase/layout/cache";
+        if (!is_dir($folder)) return;
+        if (file_exists($outputFolder . "/lastmod")) {
+            $file = fopen($outputFolder . "/lastmod", "r");
+            $lastMod = fgets($file);
+            fclose($file);
+            if (!$force && $lastMod == filemtime($folder)) return;
+        }
+
         $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($folder));
 
         foreach ($iterator as $file) {
@@ -38,7 +53,6 @@ class Layout {
             }
         }
 
-        $outputFolder = "kamebase/layout/cache";
         self::deleteFolder($outputFolder);
         mkdir($outputFolder);
 
@@ -48,6 +62,7 @@ class Layout {
             $parser->replaceData();
             $parser->writeLayout($outputFolder);
         }
+        file_put_contents($outputFolder . "/lastmod", filemtime($folder));
     }
 
     private static function deleteFolder($dir) {
@@ -63,5 +78,58 @@ class Layout {
             reset($objects);
             rmdir($dir);
         }
+    }
+
+    public static function requireStyle($cssFile) {
+        if (!array_key_exists($cssFile, self::$styles)) {
+            self::$styles[] = $cssFile;
+        }
+    }
+
+    public static function getStyle() {
+        $links = "";
+        // TODO: escape the string
+        foreach (self::$styles as $style) {
+            $links .= "<link rel=\"stylesheet\" type=\"text/css\" href=\"" . $style . "\">\n";
+        }
+        return $links;
+    }
+
+    public static function getStyles() {
+        return self::getStyle();
+    }
+
+    public static function extend($template) {
+        ob_start();
+    }
+
+    public static function stopExtend($template) {
+        self::$extended[$template] = ob_get_clean();
+        self::require($template);
+    }
+
+    public static function require($template) {
+        self::$currentFile = $template;
+        /** @noinspection PhpIncludeInspection */
+        require self::getFilename($template);
+    }
+
+    public static function section($name) {
+        if ($name === "content") {
+            return self::$extended[self::$currentFile];
+        }
+        return self::$sections[$name];
+    }
+
+    public static function getFilename($name) {
+        return "kamebase/layout/cache/" . self::$prefix . $name . ".php";
+    }
+
+    /**
+     * Can be used to change between multiple themes
+     * @param string $prefix
+     */
+    public static function setPrefix(string $prefix) {
+        self::$prefix = $prefix;
     }
 }

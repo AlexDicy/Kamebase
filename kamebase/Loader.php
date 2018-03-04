@@ -2,6 +2,7 @@
 
 use kamebase\Boot;
 use kamebase\database\DB;
+use kamebase\layout\Layout;
 use kamebase\Request;
 
 /**
@@ -59,6 +60,7 @@ if (kamebase\Config::getConfig()->hasDbData()) {
     Session::reload();
 }
 
+Layout::cacheTemplates();
 Loader::handle();
 
 Session::save();
