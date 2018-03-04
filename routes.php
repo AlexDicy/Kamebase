@@ -25,7 +25,3 @@ Router::all("/page/{id}/section/{section?}", function ($id, $sec) {
 )->defaults(
     "section", "not-set"
 );
-
-Router::get("/Kamebase/index.php", function () {
-    return \kamebase\layout\Layout::load("home.index");
-});
