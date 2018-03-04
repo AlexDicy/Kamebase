@@ -2,9 +2,10 @@
 .idea/
 
 # Generated templates
-kamebase/layout/cache
+kamebase/layout/cache/
 
 # User data
-templates
+assets/
+templates/
 routes.php
 Config.php
