@@ -34,17 +34,34 @@ class Layout {
         foreach ($iterator as $file) {
             if (!$file->isDir()) {
                 $name = $file->getPathname();
-                $name = substr($name, $folderLen, strlen($name));
-                $name = substr($name, 0, -strlen(strrchr($name, ".")));
-                $files[] = preg_replace("/[\/\\\]/", ".", $name);
+                $files[] = substr($name, $folderLen, strlen($name));
             }
         }
 
+        $outputFolder = "kamebase/layout/cache";
+        self::deleteFolder($outputFolder);
+        mkdir($outputFolder);
+
         foreach ($files as $file) {
             $parser = new Parser($file);
-            $parser->removeComments();
+            //$parser->removeComments(); it has to be fixed
             $parser->replaceData();
-            $parser->writeLayout();
+            $parser->writeLayout($outputFolder);
+        }
+    }
+
+    private static function deleteFolder($dir) {
+        if (is_dir($dir)) {
+            $objects = scandir($dir);
+            foreach ($objects as $object) {
+                if ($object != "." && $object != "..") {
+                    if (filetype($dir . "/" . $object) == "dir")
+                        self::deleteFolder($dir . "/" . $object);
+                    else unlink($dir . "/" . $object);
+                }
+            }
+            reset($objects);
+            rmdir($dir);
         }
     }
 }
