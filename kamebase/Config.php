@@ -74,6 +74,7 @@ class Config {
     }
 
     public static function getConfig() {
+        if (is_null(self::$config)) self::$config = new self();
         return self::$config;
     }
 
