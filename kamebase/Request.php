@@ -6,7 +6,7 @@
 namespace kamebase;
 
 class Request {
-
+    /* @var Request */
     public static $mainRequest = null;
 
     protected $get;
