@@ -3,18 +3,16 @@
  * Created by HAlex on 06/10/2017 17:07
  */
 
-use kamebase\layout\Layout;
 use kamebase\Router;
 
-Router::get("/", function () {
-    return Layout::load("home");
-});
+Router::get("/", "Index");
 
 Router::post("/", "Index POST");
 Router::put("/", "Index PUT");
 Router::delete("/", "Index DELETE");
 Router::patch("/", "Index PATCH");
 Router::options("/", "Index OPTIONS");
+
 
 
 Router::all("/page", "Page");
@@ -27,7 +25,3 @@ Router::all("/page/{id}/section/{section?}", function ($id, $sec) {
 )->defaults(
     "section", "not-set"
 );
-
-Router::get("/Kamebase/index.php", function () {
-    return "Local Index";
-});
