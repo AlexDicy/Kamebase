@@ -1,23 +1,24 @@
 # Kamebase
-PHP Framework, Kamebase includes Routes and... well for now just routes
-
-I mean, yes, you could say "Hey dude, you just copied everything from Laravel, Symfony...!" and I would reply "Well, yes, I did"
+PHP Framework, Kamebase includes Routes, Templates Engine, Session manager...
 
 ## Routes
 `/routes.php`
 ```php
 <?php
+use kamebase\layout\Layout;
 use kamebase\Router;
 
-Router::get("/", "Index"); // First param: Route, Second param: function or text
+Router::get("/", "Controller@index"); // First param: Route, Second param: function or Controller@method
 
-Router::post("/", "Index POST");
-Router::put("/", "Index PUT");
-Router::delete("/", "Index DELETE");
-Router::patch("/", "Index PATCH");
-Router::options("/", "Index OPTIONS");
+Router::post("/", "Controller@post");
+Router::put("/", "Controller@put");
+Router::delete("/", "Controller@delete");
+Router::patch("/", "Controller@patch");
+Router::options("/", function () {
+    return Layout::load("index.page");
+});
 
-Router::all("/page", "Page"); // This route will work on every method
+Router::all("/page", "Page@show"); // This route will work on every method
 
 // You can use variables in the route, for a post slug you can use for example /blog/{post}
 //
@@ -42,5 +43,43 @@ Router::all("/page/{id}/section/{section?}", function ($id, $sec) {
     "section", "not-set"
 );
 ```
+## Templates
+`/templates/*`
+Files in this folder will be converted to PHP
 
-P.S. I don't like PSR-4 or -0 or fu\*king functions that have the fuc\*king parentheses in the new line
+    .
+    ├── ...
+    ├── home.html               # The "home" container
+    │   ├── header.html         # The "header" that will be included in the main file
+    │   └── content.html        # Our "content" file, that will extend "home", atuomatically including other files
+    └── ...
+
+`/templates/home.html` `"home"`
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Welcome to my new website!</title>
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    { css /assets/css/home.css }
+    { getStyle() }
+</head>
+<body>
+{ include home.header }
+{ section content }
+</body>
+</html>
+
+```
+
+`/templates/home/container.html` `"home.container"`
+```
+{ extends home }
+This is my new awesome website!
+
+```
+
+This Project doesn't use Composer, sorry.
