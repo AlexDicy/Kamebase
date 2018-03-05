@@ -22,12 +22,13 @@ class Layout {
             $data["templateName"] = $name;
             ob_start();
             extract($data, EXTR_SKIP);
-            /** @noinspection PhpIncludeInspection */
-            include self::getFilename($name);
-            return ltrim(ob_get_clean());
+            if (self::require($name)) {
+                return ltrim(ob_get_clean());
+            }
         } catch (\Exception $e) {
             return null;
         }
+        return null;
     }
 
     // Websites with many files will struggle some second on the first load
@@ -109,9 +110,13 @@ class Layout {
     }
 
     public static function require($template) {
-        self::$currentFile = $template;
-        /** @noinspection PhpIncludeInspection */
-        require self::getFilename($template);
+        $name = self::getFilename($template);
+        if (file_exists($name)) {
+            self::$currentFile = $template;
+            /** @noinspection PhpIncludeInspection */
+            return require $name;
+        }
+        return false;
     }
 
     public static function section($name) {
