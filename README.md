@@ -76,10 +76,22 @@ Files in this folder will be converted to PHP
 ```
 
 `/templates/home/container.html` `"home.container"`
-```
+```html
 { extends home }
-This is my new awesome website!
-
+<p>This is my new awesome website!</p>
 ```
+
+#### Templates Syntax
+`{ variable }` refers to `$variable`
+
+`{ method() }` calls a global function like `getStyle()`
+
+`{ css https://url }` require a css that can be added to the page using `getStyle()`
+
+`{ extend template.name }` this will load the requested template and add the file content to the section `content`
+
+`{ section content }` write the section `content` (this should be inside the extended template)
+
+`{ include template.name }` include the requested template (can be used for headers, footers...)
 
 This Project doesn't use Composer, sorry.
