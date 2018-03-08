@@ -13,6 +13,7 @@ class Layout {
     private static $prefix = "";
 
     private static $styles = [];
+    private static $scripts = [];
     private static $extended = [];
     private static $sections = [];
     private static $currentFile = "";
@@ -91,13 +92,32 @@ class Layout {
         $links = "";
         // TODO: escape the string
         foreach (self::$styles as $style) {
-            $links .= "<link rel=\"stylesheet\" type=\"text/css\" href=\"" . $style . "\">\n";
+            $links .= "<link rel=\"stylesheet\" type=\"text/css\" href=\"$style\">\n";
         }
         return $links;
     }
 
     public static function getStyles() {
         return self::getStyle();
+    }
+
+    public static function requireScript($jsFile) {
+        if (!array_key_exists($jsFile, self::$scripts)) {
+            self::$scripts[] = $jsFile;
+        }
+    }
+
+    public static function getScript() {
+        $links = "";
+        // TODO: escape the string
+        foreach (self::$scripts as $script) {
+            $links .= "<script type=\"text/javascript\" src=\"$script\"></script>\n";
+        }
+        return $links;
+    }
+
+    public static function getScripts() {
+        return self::getScript();
     }
 
     public static function extend($template) {

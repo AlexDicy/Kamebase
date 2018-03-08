@@ -22,6 +22,26 @@ if (!function_exists("getStyle")) {
     function getStyle() {
         return Layout::getStyle();
     }
+
+    function getStyles() {
+        return Layout::getStyle();
+    }
+}
+
+if (!function_exists("requireScript")) {
+    function requireScript($jsFile) {
+        Layout::requireScript($jsFile);
+    }
+}
+
+if (!function_exists("getScript")) {
+    function getScript() {
+        return Layout::getScript();
+    }
+
+    function getScript() {
+        return Layout::getScripts();
+    }
 }
 
 if (!function_exists("extend")) {
