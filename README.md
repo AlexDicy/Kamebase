@@ -6,7 +6,7 @@ PHP Framework, Kamebase includes Routes, Templates Engine, Session manager...
 ```php
 <?php
 use kamebase\layout\Layout;
-use kamebase\Router;
+use kamebase\router\Router;
 
 Router::get("/", "Controller@index"); // First param: Route, Second param: function or Controller@method
 
@@ -87,6 +87,8 @@ Files in this folder will be converted to PHP
 `{ method() }` calls a global function like `getStyle()`
 
 `{ css https://url }` require a css that can be added to the page using `getStyle()`
+
+`{ js https://url }` require a script that can be added to the page using `getScript()`
 
 `{ extend template.name }` this will load the requested template and add the file content to the section `content`
 
