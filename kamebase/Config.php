@@ -14,6 +14,12 @@ class Config {
      */
     public static $config = null;
 
+    /**
+     * Installer instance, if not null the website requires an installation
+     * @var Object
+     */
+    protected $installer = null;
+
     protected $dbData = [];
 
     protected $usersColumns = [
@@ -43,6 +49,26 @@ class Config {
         "account.error.notFound" => "Account not found, email/username or password might be wrong"
     ];
 
+    /**
+     * returns true if the website has an installer,
+     * in this case the Loader will skip Session, Caches, Router and Database initialization
+     * @return bool
+     */
+    public function requireInstallation() {
+        return is_object($this->installer);
+    }
+
+    /**
+     * The installer must have a "install" method,
+     * this should check whether the website is installer or not.
+     * this should also load the database info as it will not happen automatically
+     *
+     * In case it isn't or there was an error this should return false
+     * otherwise, if the website is installed and there is no error return true
+     */
+    public function install() {
+        return $this->installer->install();
+    }
 
     public function hasDbData() {
         return !empty($this->dbData);

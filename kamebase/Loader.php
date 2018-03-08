@@ -28,9 +28,14 @@ class Loader {
      *
      * "kamebase/Route"
      * @param $className
+     * @param $required bool
      */
-    public static function load($className) {
-        includeFileOnce($className);
+    public static function load($className, $required = true) {
+        if ($required) {
+            requireFileOnce($className);
+        } else {
+            includeFileOnce($className);
+        }
     }
 
     public static function loadWithPrefix($prefix, ...$classes) {
@@ -46,24 +51,32 @@ spl_autoload_register(function ($className) {
 
 
 
-Loader::loadWithPrefix("kamebase", "Boot", "Request");
-Loader::loadWithPrefix("kamebase/session", "Session");
+$config = kamebase\Config::getConfig();
 
-Session::start();
+if ($config->requireInstallation()) {
+    // manually handle installation, routers, database etc.
+    $config->install();
 
-Loader::load("routes");
-Loader::load("kamebase/functions");
+} else {
+    Loader::loadWithPrefix("kamebase", "Boot", "Request");
+    Loader::loadWithPrefix("kamebase/session", "Session");
 
-if (kamebase\Config::getConfig()->hasDbData()) {
-    $data = kamebase\Config::getConfig()->getDbData();
-    DB::setConnection($data["host"], $data["user"], $data["password"], $data["database"]);
-    Session::reload();
+    Session::start();
+
+    Loader::load("routes");
+    Loader::load("kamebase/functions");
+
+    if ($config->hasDbData()) {
+        $data = $config->getDbData();
+        DB::setConnection($data["host"], $data["user"], $data["password"], $data["database"]);
+        Session::reload();
+    }
+
+    Layout::cacheTemplates();
+    Loader::handle();
+
+    Session::save();
 }
-
-Layout::cacheTemplates();
-Loader::handle();
-
-Session::save();
 
 
 
@@ -77,16 +90,3 @@ function requireFileOnce($className) {
     $className = str_replace("\\", "/", $className);
     require_once $className . ".php";
 }
-
-/*spl_autoload_register(function ($className) {
-    $dir = array (
-        "kamebase/",
-        "controllers/"
-    );
-
-    foreach ($dir as $directory) {
-        if (file_exists($directory . $className . ".php")) {
-            require_once $directory . $className . ".php";
-        }
-    }
-});*/
