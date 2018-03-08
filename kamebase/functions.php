@@ -24,7 +24,7 @@ if (!function_exists("getStyle")) {
     }
 
     function getStyles() {
-        return Layout::getStyle();
+        return Layout::getStyles();
     }
 }
 
@@ -39,7 +39,7 @@ if (!function_exists("getScript")) {
         return Layout::getScript();
     }
 
-    function getScript() {
+    function getScripts() {
         return Layout::getScripts();
     }
 }
