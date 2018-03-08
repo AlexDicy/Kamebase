@@ -5,6 +5,8 @@
 
 namespace kamebase\router;
 
+use kamebase\Request;
+
 class Router {
 
     /**

@@ -5,6 +5,8 @@
 
 namespace kamebase;
 
+use kamebase\router\Router;
+
 class Boot {
     public static function matchRoutes(Request $request) {
         Request::setMainRequest($request);
