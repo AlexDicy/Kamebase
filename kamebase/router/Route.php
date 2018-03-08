@@ -3,9 +3,10 @@
  * Created by HAlex on 08/10/2017 10:58
  */
 
-namespace kamebase;
+namespace kamebase\router;
 
-use Session;
+use kamebase\Request;
+use kamebase\Session;
 
 class Route {
 

@@ -3,7 +3,7 @@
  * Created by HAlex on 08/10/2017 12:10
  */
 
-namespace kamebase;
+namespace kamebase\router;
 
 class Router {
 
