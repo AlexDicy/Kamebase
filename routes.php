@@ -3,7 +3,7 @@
  * Created by HAlex on 06/10/2017 17:07
  */
 
-use kamebase\Router;
+use kamebase\router\Router;
 
 Router::get("/", "Index");
 
