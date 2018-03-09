@@ -2,7 +2,7 @@
 
 use kamebase\Config;
 use kamebase\database\DB;
-use kamebase\Router;
+use kamebase\router\Router;
 
 /**
  * Created by HAlex on 17/10/2017 16:46
