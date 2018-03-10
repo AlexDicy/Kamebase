@@ -6,6 +6,7 @@
 namespace kamebase\database;
 
 
+use kamebase\exceptions\NoDbException;
 use mysqli;
 
 class DB {
@@ -20,8 +21,26 @@ class DB {
         self::$connection->set_charset("utf8");
     }
 
+    /**
+     * @return mysqli
+     * @throws NoDbException
+     */
+    public static function getConnection() {
+        if (is_null(self::$connection)) {
+            throw new NoDbException();
+        }
+        return self::$connection;
+    }
+
+    /**
+     * @param $query
+     * @return bool|\mysqli_result
+     * @throws NoDbException
+     */
     public static function query($query) {
-        if (is_null(self::$connection)) return false;
+        if (is_null(self::$connection)) {
+            throw new NoDbException();
+        }
         return self::$connection->query($query);
     }
 
