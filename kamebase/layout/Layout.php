@@ -19,15 +19,12 @@ class Layout {
     private static $currentFile = "";
 
     public static function load($name, $data = array()) {
-        try {
-            $data["templateName"] = $name;
-            ob_start();
-            extract($data, EXTR_SKIP);
-            if (self::require($name)) {
-                return ltrim(ob_get_clean());
-            }
-        } catch (\Exception $e) {
-            return null;
+        $data["templateName"] = $name;
+        ob_start();
+        extract($data, EXTR_SKIP);
+
+        if (self::require($name)) {
+            return ltrim(ob_get_clean());
         }
         return null;
     }

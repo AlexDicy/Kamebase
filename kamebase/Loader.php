@@ -12,15 +12,9 @@ use kamebase\Request;
 class Loader {
 
     public static function handle() {
-        try {
-            $request = new Request(true);
-            $response = Boot::matchRoutes($request);
-            $response->send();
-        } catch (Exception $e) {
-            echo $e;
-        } catch (Throwable $e) {
-            echo $e;
-        }
+        $request = new Request(true);
+        $response = Boot::matchRoutes($request);
+        $response->send();
     }
 
     /**
@@ -50,9 +44,9 @@ spl_autoload_register(function ($className) {
 });
 
 
+Loader::load("routes");
 
 $config = kamebase\Config::getConfig();
-
 if ($config->requireInstallation()) {
     // manually handle installation, routers, database etc.
     $config->install();
@@ -63,7 +57,6 @@ if ($config->requireInstallation()) {
 
     Session::start();
 
-    Loader::load("routes");
     Loader::load("kamebase/functions");
 
     if ($config->hasDbData()) {
