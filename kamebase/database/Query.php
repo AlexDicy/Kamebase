@@ -7,14 +7,13 @@
 namespace kamebase\database;
 
 
+use kamebase\database\schema\Schema;
 use kamebase\database\type\Delete;
 use kamebase\database\type\Insert;
 use kamebase\database\type\QueryType;
-use kamebase\database\type\Schema;
 use kamebase\database\type\Select;
 use kamebase\database\type\Update;
 use kamebase\exceptions\BadQueryException;
-use kamebase\exceptions\NoDbException;
 
 class Query {
     /**
@@ -32,9 +31,22 @@ class Query {
      */
     private $sections = [];
 
+    /**
+     * @var QueryResponse
+     */
+    private $response;
+
     public function __construct(string $table, $type = null) {
         $this->table = $table;
         $this->type = $type;
+    }
+
+    public static function table(string $table, $type = null) {
+        return new self($table, $type);
+    }
+
+    public static function schema() {
+        return new Schema();
     }
 
     public function select($columns = null) {
@@ -57,11 +69,6 @@ class Query {
         return $this;
     }
 
-    public function schema() {
-        $this->type = new Schema($this);
-        return $this->type;
-    }
-
 
     public function columns($columns) {
         if (!is_null($columns)) {
@@ -73,7 +80,7 @@ class Query {
 
     public function values(...$values) {
         if (!is_null($values)) {
-            if (!is_array($values)) $values = array_map("trim", explode(",", $values));
+            if (!is_array($values[0])) $values = array_map("trim", explode(",", $values[0]));
             $this->sections["values"] = $values;
         }
         return $this;
@@ -89,15 +96,19 @@ class Query {
         return $this;
     }
 
-    /**
-     * @throws BadQueryException
-     * @throws NoDbException
-     */
     public function execute() {
         if (is_null($this->type) || !($this->type instanceof QueryType)) {
             throw new BadQueryException("Query type is not set");
         }
         $sql = $this->type->compile($this->sections);
-        return new QueryResponse(DB::query($sql));
+        $this->response = new QueryResponse(DB::query($sql));
+        return $this->response;
+    }
+
+    public function get($index = 0) {
+        if (!isset($this->response)) {
+            $this->execute();
+        }
+        return $this->response->get($index);
     }
 }
