@@ -41,14 +41,14 @@ class QueryResponse {
 
     public function values() {
         if (!$this->response) {
-            return false;
+            return null;
         }
         $values = $this->response->fetch_array(MYSQLI_BOTH);
 
         if (is_array($values)) {
             return $values;
         }
-        return false;
+        return null;
     }
 
     /**
@@ -84,6 +84,6 @@ class QueryResponse {
         if (is_array($values)) {
             return $values[$index];
         }
-        return false;
+        return null;
     }
 }
