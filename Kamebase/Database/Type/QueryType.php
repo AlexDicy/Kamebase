@@ -65,6 +65,14 @@ abstract class QueryType {
         return implode(", ", $set);
     }
 
+    public function getLimit(array $sections) {
+        $limit = $sections["limit"] ?? -1;
+        if ($limit > 0) {
+            return " LIMIT " . $limit;
+        }
+        return "";
+    }
+
     public function getColumns(array $columns) {
         $array = [];
         foreach ($columns as $column) {

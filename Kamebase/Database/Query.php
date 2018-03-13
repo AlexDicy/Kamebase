@@ -87,12 +87,20 @@ class Query {
     }
 
     public function where(...$where) {
-        if (!is_array($where[0])) {
+        if (!is_array($where[0])) { // String passed
             if (isset($where[1])) {
                 $where = [[$where[0] => $where[1]]];
+
             }
+        } else if (is_array($where[0][0])) { // First element is the real array
+            $where = $where[0];
         }
         $this->sections["where"] = $where;
+        return $this;
+    }
+
+    public function limit($limit = 1) {
+        $this->sections["limit"] = $limit;
         return $this;
     }
 

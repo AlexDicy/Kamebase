@@ -16,6 +16,6 @@ class Delete extends QueryType {
             $sql .= " " . $this->compileWhere($sections["where"]);
         }
 
-        return $sql;
+        return $sql . $this->getLimit($sections);
     }
 }
