@@ -79,10 +79,12 @@ class Query {
     }
 
     public function values(...$values) {
-        if (!is_null($values)) {
-            if (!is_array($values[0])) $values = array_map("trim", explode(",", $values[0]));
-            $this->sections["values"] = $values;
+        if (is_array($values[0])) {
+            $values = $values[0];
+        } else if (count($values) < 2) {
+            $values = array_map("trim", explode(",", $values[0]));
         }
+        $this->sections["values"] = $values;
         return $this;
     }
 
@@ -90,7 +92,6 @@ class Query {
         if (!is_array($where[0])) { // String passed
             if (isset($where[1])) {
                 $where = [[$where[0] => $where[1]]];
-
             }
         } else if (is_array($where[0][0])) { // First element is the real array
             $where = $where[0];

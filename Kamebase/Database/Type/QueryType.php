@@ -59,8 +59,8 @@ abstract class QueryType {
         $columns = $sections["columns"];
         $values = $sections["values"];
         $set = [];
-        for ($i = 0; $i < count($columns); $i++) {
-            $set[] = $this->getColumn($columns[$i]) . " = " . $this->getVar($values[$i]);
+        foreach ($values as $value) {
+            $set[] = $this->getColumn(array_shift($columns)) . " = " . $this->getVar($value);
         }
         return implode(", ", $set);
     }
