@@ -39,11 +39,11 @@ class QueryResponse {
         }
     }
 
-    public function values() {
+    public function values($associativeOnly = false) {
         if (!$this->response) {
             return null;
         }
-        $values = $this->response->fetch_array(MYSQLI_BOTH);
+        $values = $this->response->fetch_array($associativeOnly ? MYSQLI_ASSOC : MYSQLI_BOTH);
 
         if (is_array($values)) {
             return $values;
