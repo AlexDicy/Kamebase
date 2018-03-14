@@ -8,8 +8,9 @@ namespace Kamebase\Entity;
 
 
 use Kamebase\Database\Query;
+use Kamebase\Util\Str;
 
-abstract class Entity {
+abstract class Entity implements \JsonSerializable {
     const CREATED_AT = "created_at";
     const UPDATED_AT = "updated_at";
     const LIMIT = 1000;
@@ -26,6 +27,9 @@ abstract class Entity {
     public $data = [];
 
     public function __construct($key = null) {
+        if (!isset($this->table)) {
+            $this->table = Str::snake(Str::plural(static::class));
+        }
         if (is_null($key)) {
             $this->defaults();
         } else {
@@ -37,7 +41,9 @@ abstract class Entity {
      * Setup default values for the new Entity
      * @return void
      */
-    public abstract function defaults();
+    public function defaults() {
+
+    }
 
     public function __get($name) {
         return $this->data[$name];
@@ -47,9 +53,14 @@ abstract class Entity {
         $this->data[$name] = $value;
     }
 
-    public function loadData(array $data) {
-        $this->data = $data;
-        $this->exists = true;
+    /**
+     * @param $data array|null
+     */
+    public function loadData($data) {
+        if ($data) {
+            $this->data = $data;
+            $this->exists = true;
+        }
     }
 
     /**
@@ -60,7 +71,7 @@ abstract class Entity {
         $result = Query::table($this->table)->select()->where($this->key, $key)->limit()->execute();
 
         if ($result->success()) {
-            $this->loadData($result->values());
+            $this->loadData($result->values(true));
             return $this;
         }
 
@@ -73,7 +84,7 @@ abstract class Entity {
         $found = [];
 
         if ($result->success()) {
-            while ($values = $result->values()) {
+            while ($values = $result->values(true)) {
                 $e = new static();
                 $e->loadData($values);
                 $found[] = $e;
@@ -89,7 +100,7 @@ abstract class Entity {
         $found = [];
 
         if ($result->success()) {
-            while ($values = $result->values()) {
+            while ($values = $result->values(true)) {
                 $e = new static();
                 $e->loadData($values);
                 $found[] = $e;
@@ -97,5 +108,37 @@ abstract class Entity {
         }
 
         return $found;
+    }
+
+    /**
+     * Update the entity in the database if it already exists, otherwise insert it.
+     * @return bool if the entity was saved successfully
+     */
+    public function save() {
+        $values = $this->data;
+        if ($this->exists) {
+            if (isset($values[$this->key])) {
+                $key = $values[$this->key];
+                // remove primary key from the data
+                unset($values[$this->key]);
+                $result = Query::table($this->table)
+                    ->update(array_keys($values))
+                    ->values($values)
+                    ->where($this->key, $key)
+                    ->execute();
+                return $result->success();
+            }
+            return false;
+        } else {
+            $result = Query::table($this->table)
+                ->insert(array_keys($values))
+                ->values($values)
+                ->execute();
+            return $result->success();
+        }
+    }
+
+    public function jsonSerialize() {
+        return $this->data;
     }
 }
