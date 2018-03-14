@@ -237,7 +237,7 @@ class Route {
                 $parts = $this->getControllerParts();
                 $controller = new $parts[0];
 
-                return $controller->{$parts[1]}(...array_values($this->variables));
+                return $controller->{$parts[1]}(...self::getParameters($controller, $parts[1], $this->variables));
             }
             return $callable;
         }
@@ -343,5 +343,22 @@ class Route {
      */
     public function __get($name) {
         return $this->getVariable($name);
+    }
+
+
+    public static function getParameters($instance, $method, array $variables) {
+        $parameters = (new \ReflectionMethod($instance, $method))->getParameters();
+
+        foreach ($parameters as $parameter) {
+            $class = $parameter->getClass();
+            $name = $parameter->getName();
+            if (is_object($class)
+                && is_subclass_of($class->getName(), '\kamebase\Entity\Entity')
+                && isset($variables[$name])
+            ) {
+                $variables[$name] = $class->newInstance($variables[$name]);
+            }
+        }
+        return array_values($variables);
     }
 }
