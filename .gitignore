@@ -1,12 +1,16 @@
 # IDE files
 .idea/
 
-# Generated templates
+# Generated cache
 /Kamebase/Layout/cache/
+/Kamebase/Cacher/cache/
 
 # User data
 /assets/
 /templates/
-/controllers/
-/routes.php
+
+# Configurable data
+/Controllers/
+/Routes.php
 /Config.php
+/.htaccess
