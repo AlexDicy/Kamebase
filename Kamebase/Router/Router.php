@@ -79,6 +79,7 @@ class Router {
     }
 
     public static function match(Request $request) {
+        /* @var $routes Route[] */
         $routes = is_null($request->getMethod()) ? [] : self::getOrDefault(static::$routesByMethod, $request->getMethod(), []);
 
         $route = null;
