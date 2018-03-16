@@ -30,7 +30,7 @@ class QueryResponse {
             $this->success = true;
             $this->rows = $response->num_rows;
             try {
-                $this->affectedRows = DB::getConnection()->affected_rows;
+                $this->affectedRows = DB::connection()->affected_rows;
             } catch (NoDbException $e) {
             }
             $this->fields = $response->fetch_fields() ?: [];

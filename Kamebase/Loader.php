@@ -11,8 +11,7 @@ use Kamebase\Request;
 
 class Loader {
 
-    public static function handle() {
-        $request = new Request(true);
+    public static function handle(Request $request) {
         $response = Boot::matchRoutes($request);
         $response->send();
     }
@@ -54,21 +53,20 @@ if ($config->requireInstallation()) {
 } else {
     Loader::loadWithPrefix("kamebase", "Boot", "Request");
     Loader::loadWithPrefix("kamebase/session", "Session");
-
-    Session::start();
-
     Loader::load("kamebase/functions");
 
     if ($config->hasDbData()) {
         $data = $config->getDbData();
         DB::setConnection($data["host"], $data["user"], $data["password"], $data["database"]);
-        Session::reload();
     }
+    $request = new Request(true);
+    $request::setMainRequest($request);
+    Session::setHandler($config->getSessionHandler());
 
     Layout::cacheTemplates();
-    Loader::handle();
+    Loader::handle($request);
 
-    Session::save();
+    Session::shutdown();
 }
 
 

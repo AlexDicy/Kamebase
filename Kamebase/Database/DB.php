@@ -25,11 +25,15 @@ class DB {
      * @return mysqli
      * @throws NoDbException
      */
-    public static function getConnection() {
+    public static function connection() {
         if (is_null(self::$connection)) {
             throw new NoDbException();
         }
         return self::$connection;
+    }
+
+    public static function connected() {
+        return is_object(self::$connection) && self::$connection->ping();
     }
 
     /**

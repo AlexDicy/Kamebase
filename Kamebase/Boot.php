@@ -9,7 +9,6 @@ use Kamebase\Router\Router;
 
 class Boot {
     public static function matchRoutes(Request $request) {
-        Request::setMainRequest($request);
         $content = Router::match($request);
         $response = null;
 

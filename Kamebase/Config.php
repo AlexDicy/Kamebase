@@ -7,6 +7,8 @@ namespace Kamebase;
 
 
 
+use Kamebase\Session\Handlers\PhpSessionHandler;
+
 class Config {
 
     /**
@@ -93,6 +95,10 @@ class Config {
      */
     public function getTables() {
         return $this->tables;
+    }
+
+    public function getSessionHandler() {
+        return new PhpSessionHandler();
     }
 
     public static function loadConfiguration(Config $config) {

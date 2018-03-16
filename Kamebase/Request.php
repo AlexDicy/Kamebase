@@ -86,7 +86,7 @@ class Request {
 
     public function getHost() {
         if ($this->host === null) {
-            $this->host = $_SERVER['HTTP_HOST'];
+            $this->host = $_SERVER["HTTP_HOST"];
         }
         return $this->host;
     }
@@ -105,6 +105,14 @@ class Request {
         }
 
         return $this->method;
+    }
+
+    public function getIp() {
+        return $this->server["REMOTE_ADDR"];
+    }
+
+    public function getUserAgent($maxLength = 512) {
+        return substr($this->server["HTTP_USER_AGENT"], 0, $maxLength);
     }
 
     public function setRoute($route) {

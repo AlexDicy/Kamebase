@@ -2,32 +2,32 @@
 
 use Kamebase\Config;
 use Kamebase\Database\DB;
+use Kamebase\Exceptions\SessionHandlerException;
 use Kamebase\Router\Router;
+use Kamebase\Session\Handlers\Handler;
 
 /**
  * Created by HAlex on 17/10/2017 16:46
  */
 
 class Session {
+    /* @var Handler */
+    public static $handler = null;
 
     public static function set($key, $value = true) {
-        if (is_array($key)) {
-            array_merge($_SESSION, $key);
-        } else {
-            $_SESSION[$key] = $value;
-        }
+        self::$handler->set($key, $value);
     }
 
     public static function get($key, $default = null) {
-        return $_SESSION[$key] ?? $default;
+        return self::$handler->get($key, $default);
     }
 
     public static function has($key) {
-        return isset($_SESSION[$key]);
+        return self::$handler->has($key);
     }
 
     public static function unset($key) {
-        unset($_SESSION[$key]);
+        self::$handler->unset($key);
     }
 
     public static function push($key, $value) {
@@ -41,6 +41,36 @@ class Session {
         self::set($key, $value);
         self::push("_flash.new", $key);
     }
+
+    public static function setHandler(Handler $handler) {
+        if (is_null(self::$handler)) {
+            self::$handler = $handler;
+            $handler->setup();
+            if (DB::connected()) self::reload();
+        } else {
+            throw new SessionHandlerException("Handler was already set.");
+        }
+    }
+
+    public static function shutdown() {
+        if (is_object(self::$handler)) {
+            self::$handler->shutdown();
+            //if (r)
+            // TODO clear old sessions
+        }
+    }
+
+
+    public static function setup() {
+        if (is_object(self::$handler)) self::$handler->setup();
+    }
+
+    public static function destroy() {
+        if (is_object(self::$handler)) self::$handler->destroy();
+    }
+
+
+
 
 
 
@@ -166,25 +196,5 @@ class Session {
                 Session::set("user", $data);
             }
         }
-    }
-
-    public static function start() {
-        session_name("KamebaseID");
-        session_start();
-    }
-
-    public static function save() {
-        $keys = self::get("_flash.old", []);
-
-        foreach ($keys as $key) {
-            self::unset($key);
-        }
-
-        self::set("_flash.old", self::get("_flash.new", []));
-        self::set("_flash.new", []);
-    }
-
-    public static function destroy() {
-        session_destroy();
     }
 }
