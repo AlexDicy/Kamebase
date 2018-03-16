@@ -102,7 +102,8 @@ class Create extends SchemaQuery {
         return $this->index($name, "fulltext", [$column]);
     }
 
-    public function checkExists(bool $checkExists) {
+    public function checkExists(bool $checkExists = true) {
         $this->checkExists = $checkExists;
+        return $this;
     }
 }
