@@ -142,7 +142,7 @@ class Column {
 
         if ($this->autoIncrement) {
             $sql .= " AUTO_INCREMENT";
-        } else {
+        } else if (!$this->primaryKey) {
             if ($this->default === null && !$this->notNull) {
                 $sql .= " DEFAULT NULL";
             } else if ($this->default !== null) {
