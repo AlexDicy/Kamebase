@@ -6,6 +6,7 @@
 namespace Kamebase\Router;
 
 use Kamebase\Request;
+use Kamebase\Response;
 
 class Router {
 

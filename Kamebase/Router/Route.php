@@ -225,7 +225,6 @@ class Route {
     public function execute(Request $request) {
         $this->getPattern();
         $this->variables = $this->parseVariables($request);
-        $this->variables["_request"] = $request;
         $callable = $this->settings["action"];
 
         if (is_callable($callable)) {
@@ -237,7 +236,7 @@ class Route {
                 $parts = $this->getControllerParts();
                 $controller = new $parts[0];
 
-                return $controller->{$parts[1]}(...self::getParameters($controller, $parts[1], $this->variables));
+                return $controller->{$parts[1]}(...self::getParameters($controller, $parts[1], $this->variables, $request));
             }
             return $callable;
         }
@@ -346,17 +345,18 @@ class Route {
     }
 
 
-    public static function getParameters($instance, $method, array $variables) {
+    public static function getParameters($instance, $method, array $variables, Request $request) {
         $parameters = (new \ReflectionMethod($instance, $method))->getParameters();
 
         foreach ($parameters as $parameter) {
             $class = $parameter->getClass();
             $name = $parameter->getName();
-            if (is_object($class)
-                && is_subclass_of($class->getName(), '\kamebase\Entity\Entity')
-                && isset($variables[$name])
-            ) {
-                $variables[$name] = $class->newInstance($variables[$name]);
+            if (is_object($class)) {
+                if (is_subclass_of($class->getName(), '\Kamebase\Entity\Entity') && isset($variables[$name])) {
+                    $variables[$name] = $class->newInstance($variables[$name]);
+                } else if (is_a($class->getName(), '\Kamebase\Request')) {
+                    $variables["_request"] = $request;
+                }
             }
         }
         return array_values($variables);
