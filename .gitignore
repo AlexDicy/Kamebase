@@ -11,6 +11,7 @@
 
 # Configurable data
 /Controllers/
+/Entities/
 /Routes.php
 /Config.php
 /.htaccess
