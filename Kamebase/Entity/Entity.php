@@ -141,8 +141,8 @@ abstract class Entity implements \JsonSerializable {
     /**
      * @return Query
      */
-    public function query() {
-        return Query::table($this->table);
+    public static function query() {
+        return Query::table((new static())->table);
     }
 
     public function jsonSerialize() {
