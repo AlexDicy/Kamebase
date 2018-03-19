@@ -39,7 +39,7 @@ class QueryResponse {
         }
     }
 
-    public function values($associativeOnly = false) {
+    public function values($associativeOnly = true) {
         if (!$this->response) {
             return null;
         }
@@ -80,7 +80,7 @@ class QueryResponse {
     }
 
     public function get($index = 0) {
-        $values = $this->values();
+        $values = $this->values(false);
         if (is_array($values)) {
             return $values[$index];
         }

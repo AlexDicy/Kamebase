@@ -71,7 +71,7 @@ abstract class Entity implements \JsonSerializable {
         $result = Query::table($this->table)->select()->where($this->key, $key)->limit()->execute();
 
         if ($result->success()) {
-            $this->loadData($result->values(true));
+            $this->loadData($result->values());
             return $this;
         }
 
@@ -84,7 +84,7 @@ abstract class Entity implements \JsonSerializable {
         $found = [];
 
         if ($result->success()) {
-            while ($values = $result->values(true)) {
+            while ($values = $result->values()) {
                 $e = new static();
                 $e->loadData($values);
                 $found[] = $e;
@@ -100,7 +100,7 @@ abstract class Entity implements \JsonSerializable {
         $found = [];
 
         if ($result->success()) {
-            while ($values = $result->values(true)) {
+            while ($values = $result->values()) {
                 $e = new static();
                 $e->loadData($values);
                 $found[] = $e;
