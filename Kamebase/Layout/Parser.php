@@ -14,7 +14,7 @@ class Parser {
     const REGEX_EXTENDED = "/<\?php[\s]*extend[\s]*\(\"(\S*)?\"\)[;]?[\s]* \?>/";
     const REGEX_CSS = "/{[\s]*css (\S*)[\s]*}/";
     const REGEX_JS = "/{[\s]*js (\S*)[\s]*}/";
-    const REGEX_FUNC = "/{[\s]*(\S*)\(\)[\s]*}/";
+    const REGEX_FUNC = "/{[\s]*(\S*)\(([\S\s]*)\)[\s]*}/";
     const REGEX_VAR = "/({)(.+?)(})/";
 
     private $name;
@@ -39,7 +39,7 @@ class Parser {
         $this->data = preg_replace(self::REGEX_SECTION, "<?= section(\"$1\") ?>", $this->data);
         $this->data = preg_replace(self::REGEX_CSS, "<?php requireStyle(\"$1\") ?>", $this->data);
         $this->data = preg_replace(self::REGEX_JS, "<?php requireScript(\"$1\") ?>", $this->data);
-        $this->data = preg_replace(self::REGEX_FUNC, "<?= $1() ?>", $this->data);
+        $this->data = preg_replace(self::REGEX_FUNC, "<?= $1($2) ?>", $this->data);
         $this->data = preg_replace(self::REGEX_VAR, "<?= \$$2 ?>", $this->data);
 
         if (preg_match(self::REGEX_EXTENDED, $this->data, $matches) > 0) {
