@@ -1,14 +1,16 @@
 <?php
+/**
+ * Created by HAlex on 17/10/2017 16:46
+ */
+
+namespace Kamebase\Session;
+
 
 use Kamebase\Config;
 use Kamebase\Database\DB;
 use Kamebase\Exceptions\SessionHandlerException;
 use Kamebase\Router\Router;
 use Kamebase\Session\Handlers\Handler;
-
-/**
- * Created by HAlex on 17/10/2017 16:46
- */
 
 class Session {
     /* @var Handler */

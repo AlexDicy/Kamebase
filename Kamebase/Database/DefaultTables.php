@@ -20,5 +20,14 @@ class DefaultTables {
         $table->column("email", "varchar", 40);
         $table->column("password", "varchar", 40);
         $tables[] = $table;
+
+        // Table structure for Database based sessions
+        $session = Schema::create("sessions");
+        $session->column("id", "varchar", 64)->primaryKey();
+        $session->column("ip", "varchar", 40);
+        $session->column("last_activity", "timestamp");
+        $session->column("user_agent", "text");
+        $session->column("data", "text");
+        //$tables[] = $session;
     }
 }

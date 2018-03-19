@@ -132,12 +132,14 @@ class DatabaseSessionHandler implements Handler {
     public function saveData() {
         $session = $this->connection->escape_string($this->session);
         $ip = $this->connection->escape_string(Request::getMainRequest()->getIp());
+        //$user = \Session::user();
+        $user = 0;
         $lastActivity = $this->connection->escape_string(date("Y-m-d H:i:s"));
         $userAgent = $this->connection->escape_string(Request::getMainRequest()->getUserAgent());
         $data = base64_encode(serialize($this->data));
-        $result = new QueryResponse($this->connection->query("INSERT INTO `sessions` (`id`, `ip`, `last_activity`, `user_agent`, `data`)
-                  VALUES ('$session', '$ip', '$lastActivity', '$userAgent', '$data')
-                  ON DUPLICATE KEY UPDATE `ip` = VALUES(`ip`), `last_activity` = VALUES(`last_activity`), `user_agent` = VALUES(`user_agent`), `data` = VALUES(`data`)"));
+        $result = new QueryResponse($this->connection->query("INSERT INTO `sessions` (`id`, `user`, `ip`, `last_activity`, `user_agent`, `data`)
+                  VALUES ('$session', '0', '$ip', '$lastActivity', '$userAgent', '$data')
+                  ON DUPLICATE KEY UPDATE `ip` = VALUES(`ip`), `user` = VALUES(`user`), `last_activity` = VALUES(`last_activity`), `user_agent` = VALUES(`user_agent`), `data` = VALUES(`data`)"));
         if (!$result->success()) throw new SessionHandlerException("Database query failed");
     }
 }
