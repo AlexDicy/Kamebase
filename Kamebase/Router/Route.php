@@ -354,7 +354,7 @@ class Route {
             if (is_object($class)) {
                 if (is_subclass_of($class->getName(), '\Kamebase\Entity\Entity') && isset($variables[$name])) {
                     $variables[$name] = $class->newInstance($variables[$name]);
-                } else if (is_a($class->getName(), '\Kamebase\Request')) {
+                } else if (is_a($class->getName(), '\Kamebase\Request', true)) {
                     $variables["_request"] = $request;
                 }
             }
