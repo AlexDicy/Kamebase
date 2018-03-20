@@ -14,7 +14,7 @@ class Parser {
     const REGEX_EXTENDED = "/<\?php[\s]*extend[\s]*\(\"(\S*)?\"\)[;]?[\s]* \?>/";
     const REGEX_CSS = "/{[\s]*css (\S*)[\s]*}/";
     const REGEX_JS = "/{[\s]*js (\S*)[\s]*}/";
-    const REGEX_FUNC = "/{[\s]*(\S*)\(([\S\s]*?)\)[\s]*}";
+    const REGEX_FUNC = "/{[\s]*(\S*)\(([\S\s]*?)\)[\s]*}/";
     const REGEX_VAR = "/({)(.+?)(})/";
 
     private $name;
