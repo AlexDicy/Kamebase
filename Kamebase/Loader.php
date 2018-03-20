@@ -4,6 +4,7 @@ use Kamebase\Boot;
 use Kamebase\Database\DB;
 use Kamebase\Layout\Layout;
 use Kamebase\Request;
+use Kamebase\Session\Session;
 
 /**
  * Created by HAlex on 08/10/2017 21:01
