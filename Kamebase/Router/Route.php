@@ -6,7 +6,7 @@
 namespace Kamebase\Router;
 
 use Kamebase\Request;
-use Session;
+use Kamebase\Session\Session;
 
 class Route {
 
