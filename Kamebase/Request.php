@@ -112,7 +112,7 @@ class Request {
     }
 
     public function getUserAgent($maxLength = 512) {
-        return substr($this->server["HTTP_USER_AGENT"], 0, $maxLength);
+        return substr($this->server["HTTP_USER_AGENT"] ?? "none", 0, $maxLength);
     }
 
     public function setRoute($route) {
