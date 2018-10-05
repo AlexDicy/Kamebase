@@ -52,9 +52,9 @@ if ($config->requireInstallation()) {
     $config->install();
 
 } else {
-    Loader::loadWithPrefix("kamebase", "Boot", "Request");
-    Loader::loadWithPrefix("kamebase/session", "Session");
-    Loader::load("kamebase/functions");
+    Loader::loadWithPrefix("Kamebase", "Boot", "Request");
+    Loader::loadWithPrefix("Kamebase/Session", "Session");
+    Loader::load("Kamebase/functions");
 
     if ($config->hasDbData()) {
         $data = $config->getDbData();
@@ -64,7 +64,7 @@ if ($config->requireInstallation()) {
     $request::setMainRequest($request);
     Session::setHandler($config->getSessionHandler());
 
-    Layout::cacheTemplates();
+    //Layout::cacheTemplates();
     Loader::handle($request);
 
     Session::shutdown();

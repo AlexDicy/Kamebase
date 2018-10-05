@@ -100,23 +100,11 @@ if (!function_exists("extend")) {
 }
 
 /**
- * Used in Templates files, usually auto-generated
- * indicates that the file ends and it is ready to be included
- */
-if (!function_exists("stopExtend")) {
-    function stopExtend($template) {
-        Layout::stopExtend($template);
-    }
-}
-
-/**
- * Used in Templates files, requires a section
- *
- * The section "content" will contain the file that extended the current file
+ * Used in Templates files, writes the extension
  * @see extend();
  */
-if (!function_exists("section")) {
-    function section($name) {
-        return Layout::section($name);
+if (!function_exists("content")) {
+    function content() {
+        return Layout::content();
     }
 }

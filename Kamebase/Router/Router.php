@@ -295,7 +295,7 @@ class Router {
             return "";
         }
         preg_match("/^./u", $pattern, $pattern);
-        return false !== strpos($separators, $pattern[0]) ? $pattern[0] : "";
+        return isset($pattern[0]) && strpos($separators, $pattern[0]) !== false ? $pattern[0] : "";
     }
 
     /**
