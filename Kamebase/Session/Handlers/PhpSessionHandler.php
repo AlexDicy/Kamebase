@@ -59,14 +59,6 @@ class PhpSessionHandler implements Handler {
      * Method is run when the script shutdowns
      */
     public function shutdown() {
-        $keys = self::get("_flash.old", []);
-
-        foreach ($keys as $key) {
-            self::unset($key);
-        }
-
-        self::set("_flash.old", self::get("_flash.new", []));
-        self::set("_flash.new", []);
     }
 
     /**

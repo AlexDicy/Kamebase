@@ -10,6 +10,7 @@ namespace Kamebase\Session\Handlers;
 use Kamebase\Database\QueryResponse;
 use Kamebase\Exceptions\SessionHandlerException;
 use Kamebase\Request;
+use Kamebase\Session\Session;
 use mysqli;
 
 class DatabaseSessionHandler implements Handler {
@@ -25,6 +26,11 @@ class DatabaseSessionHandler implements Handler {
      */
     private $data = [];
 
+    /**
+     * DatabaseSessionHandler constructor, accepts a connection @see DB::connection()
+     * @param mysqli $connection
+     * @param int $minutes how many minutes the cookie for the session should be valid
+     */
     public function __construct(mysqli $connection, int $minutes) {
         $this->connection = $connection;
         $this->minutes = $minutes;
@@ -73,6 +79,7 @@ class DatabaseSessionHandler implements Handler {
      */
     public function setup() {
         $this->session = $this->loadSessionId();
+        setcookie("KamebaseID", $this->session, time() + $this->minutes * 60);
         if ($this->exists) $this->loadData();
     }
 
@@ -106,9 +113,9 @@ class DatabaseSessionHandler implements Handler {
 
         for ($i = 0; $i < 64; $i++) {
             $log = log($max, 2);
-            $bytes = (int) ($log / 8) + 1;
-            $bits = (int) $log + 1;
-            $filter = (int) (1 << $bits) - 1;
+            $bytes = (int)($log / 8) + 1;
+            $bits = (int)$log + 1;
+            $filter = (int)(1 << $bits) - 1;
             do {
                 $rnd = hexdec(bin2hex(openssl_random_pseudo_bytes($bytes)));
                 $rnd = $rnd & $filter;
@@ -117,7 +124,6 @@ class DatabaseSessionHandler implements Handler {
         }
 
         $this->session = $string;
-        setcookie("KamebaseID", $string, time() + $this->minutes * 60);
         return $string;
     }
 
@@ -132,13 +138,12 @@ class DatabaseSessionHandler implements Handler {
     public function saveData() {
         $session = $this->connection->escape_string($this->session);
         $ip = $this->connection->escape_string(Request::getMainRequest()->getIp());
-        //$user = \Session::user();
-        $user = 0;
+        $user = $this->connection->escape_string(Session::get("id", 0));
         $lastActivity = $this->connection->escape_string(date("Y-m-d H:i:s"));
         $userAgent = $this->connection->escape_string(Request::getMainRequest()->getUserAgent());
         $data = base64_encode(serialize($this->data));
         $result = new QueryResponse($this->connection->query("INSERT INTO `sessions` (`id`, `user`, `ip`, `last_activity`, `user_agent`, `data`)
-                  VALUES ('$session', '0', '$ip', '$lastActivity', '$userAgent', '$data')
+                  VALUES ('$session', '$user', '$ip', '$lastActivity', '$userAgent', '$data')
                   ON DUPLICATE KEY UPDATE `ip` = VALUES(`ip`), `user` = VALUES(`user`), `last_activity` = VALUES(`last_activity`), `user_agent` = VALUES(`user_agent`), `data` = VALUES(`data`)"));
         if (!$result->success()) throw new SessionHandlerException("Database query failed");
     }

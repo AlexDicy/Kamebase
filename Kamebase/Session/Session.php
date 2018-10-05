@@ -56,6 +56,14 @@ class Session {
 
     public static function shutdown() {
         if (is_object(self::$handler)) {
+            $keys = self::get("_flash.old", []);
+
+            foreach ($keys as $key) {
+                self::unset($key);
+            }
+
+            self::set("_flash.old", self::get("_flash.new", []));
+            self::set("_flash.new", []);
             self::$handler->shutdown();
             //if (r)
             // TODO clear old sessions
