@@ -1,5 +1,5 @@
 # Kamebase
-PHP Framework, Kamebase includes Routes, Templates Engine, Session manager...
+PHP Framework, Kamebase includes Routes, Templates, Session manager...
 
 ## Routes
 `/routes.php`
@@ -43,57 +43,24 @@ Router::all("/page/{id}/section/{section?}", function ($id, $sec) {
     "section", "not-set"
 );
 ```
-## Templates
-`/templates/*`
-Files in this folder will be converted to PHP
 
-    .
-    ├── ...
-    ├── home.html               # The "home" container
-    │   ├── header.html         # The "header" that will be included in the main file
-    │   └── content.html        # Our "content" file, that will extend "home", atuomatically including other files
-    └── ...
+## Config
+Create a file named `/Config.php` in the root directory,
+the config will allow you to connect to a database.
+```php
+<?php
+class Config extends \Kamebase\Config {
+    protected $dbData = [
+        "host" => "localhost",
+        "user" => "username",
+        "password" => "password",
+        "database" => "database"
+    ];
 
-`/templates/home.html` `"home"`
-```html
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Welcome to my new website!</title>
-    <meta name="viewport"
-          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    { css /assets/css/home.css }
-    { getStyle() }
-</head>
-<body>
-{ include home.header }
-{ section content }
-</body>
-</html>
-
+    public function isCloudFlareEnabled() {
+        return true;
+    }
+}
 ```
-
-`/templates/home/container.html` `"home.container"`
-```html
-{ extends home }
-<p>This is my new awesome website!</p>
-```
-
-#### Templates Syntax
-`{ variable }` refers to `$variable`
-
-`{ method() }` calls a global function like `getStyle()`
-
-`{ css https://url }` require a css that can be added to the page using `getStyle()`
-
-`{ js https://url }` require a script that can be added to the page using `getScript()`
-
-`{ extend template.name }` this will load the requested template and add the file content to the section `content`
-
-`{ section content }` write the section `content` (this should be inside the extended template)
-
-`{ include template.name }` include the requested template (can be used for headers, footers...)
 
 This Project doesn't use Composer, sorry.
