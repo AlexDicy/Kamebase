@@ -9,6 +9,7 @@ namespace Kamebase\Entity;
 
 use Kamebase\Database\Query;
 use Kamebase\Util\Str;
+use ReflectionClass;
 
 abstract class Entity implements \JsonSerializable {
     const CREATED_AT = "created_at";
@@ -24,11 +25,13 @@ abstract class Entity implements \JsonSerializable {
     protected $limit = 20;
 
     public $exists = false;
-    public $data = [];
+    private $data = [];
 
     public function __construct($key = null) {
         if (!isset($this->table)) {
-            $this->table = Str::snake(Str::plural(static::class));
+            /** @noinspection PhpUnhandledExceptionInspection */
+            $className = (new ReflectionClass($this))->getShortName(); // Actual faster way to get class short name
+            $this->table = Str::snake(Str::plural($className));
         }
         if (is_null($key)) {
             $this->defaults();
@@ -78,6 +81,16 @@ abstract class Entity implements \JsonSerializable {
         return null;
     }
 
+    public function one($entity, $key = "") {
+        if (empty($key)) {
+            /** @noinspection PhpUnhandledExceptionInspection */
+            $key = Str::snake(Str::lower((new ReflectionClass($entity))->getShortName())) . "_id";
+        }
+        return new $entity($this->data[$key]);
+    }
+
+    // Static
+
     public static function where(...$where) {
         $entity = new static();
         $result = Query::table($entity->table)->select()->where($where)->limit(self::LIMIT)->execute();
@@ -94,9 +107,16 @@ abstract class Entity implements \JsonSerializable {
         return $found;
     }
 
+    /**
+     * @return static[]
+     */
     public static function all() {
         $entity = new static();
-        $result = Query::table($entity->table)->select()->limit(self::LIMIT)->execute();
+        $query = Query::table($entity->table)->select()->limit(self::LIMIT);
+        if ($entity->timestamps) {
+            $query->desc(self::CREATED_AT);
+        }
+        $result = $query->execute();
         $found = [];
 
         if ($result->success()) {
@@ -134,8 +154,41 @@ abstract class Entity implements \JsonSerializable {
                 ->insert(array_keys($values))
                 ->values($values)
                 ->execute();
-            return $result->success();
+            if ($result->success()) {
+                $id = Query::table($this->table)
+                    ->select($this->key)
+                    ->desc($this->key)->limit()
+                    ->execute()->get();
+                $this->data[$this->key] = $id;
+                if ($this->timestamps) {
+                    $now = date("Y-m-d H:i:s");
+                    $this->data[self::CREATED_AT] = $now;
+                    $this->data[self::UPDATED_AT] = $now;
+                }
+                return true;
+            }
+            return false;
         }
+    }
+
+    public function delete() {
+        $values = $this->data;
+        if ($this->exists) {
+            if (isset($values[$this->key])) {
+                $key = $values[$this->key];
+
+                $result = Query::table($this->table)
+                    ->delete()
+                    ->where($this->key, $key)
+                    ->execute();
+                if ($result->success()) {
+                    $this->exists = false;
+                    return true;
+                }
+            }
+            return false;
+        }
+        return true;
     }
 
     /**
@@ -144,6 +197,8 @@ abstract class Entity implements \JsonSerializable {
     public static function query() {
         return Query::table((new static())->table);
     }
+
+    // Others
 
     public function jsonSerialize() {
         return $this->data;

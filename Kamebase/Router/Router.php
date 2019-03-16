@@ -18,7 +18,7 @@ class Router {
 
     /**
      * Contains all the routes
-     * @var array
+     * @var Route[]
      */
     public static $routes = [];
 
@@ -63,6 +63,10 @@ class Router {
         return static::addRoute("POST", $path, $settings);
     }
 
+    public static function both($path, $settings = null) {
+        return static::addRoute(["GET", "HEAD", "POST"], $path, $settings);
+    }
+
     public static function put($path, $settings = null) {
         return static::addRoute("PUT", $path, $settings);
     }
@@ -79,6 +83,11 @@ class Router {
         return static::addRoute("OPTIONS", $path, $settings);
     }
 
+    /**
+     * @param Request $request
+     * @return mixed|null
+     * @throws \Kamebase\Exceptions\ResponseException
+     */
     public static function match(Request $request) {
         /* @var $routes Route[] */
         $routes = is_null($request->getMethod()) ? [] : self::getOrDefault(static::$routesByMethod, $request->getMethod(), []);
@@ -111,9 +120,28 @@ class Router {
         return null;
     }
 
+    public static function getAvailableMethods(Request $request) {
+        $methods = [];
+
+        foreach (self::$routes as $route) {
+            if ($route->matches($request)) {
+                foreach ($route->methods as $method) {
+                    if (!in_array($method, $methods)) {
+                        $methods[] = $method;
+                    }
+                }
+            }
+        }
+
+        return $methods;
+    }
+
     public static function getUrl($routeName, $parameters = null, $default = "/") {
         if (isset(static::$routesByName[$routeName])) {
             $url = static::$routesByName[$routeName]->getPath();
+            // 1 parameter support
+            if ($parameters !== null && !is_array($parameters)) $parameters = [$parameters];
+            // Check if parameters are supplied
             if (is_array($parameters)) {
                 $path = preg_replace_callback("/\\{.*?\\}/", function ($match) use (&$parameters) {
                     return (empty($parameters) && !(substr($match[0], -2) === "?}")) ? $match[0] : array_shift($parameters);
@@ -132,6 +160,9 @@ class Router {
 
     public static function toRoute($routeName, $parameters = null) {
         $url = self::getUrl($routeName);
+        // 1 parameter support
+        if ($parameters !== null && !is_array($parameters)) $parameters = [$parameters];
+        // Check if parameters are supplied
         if (is_array($parameters)) {
             $path = preg_replace_callback("/\\{.*?\\}/", function ($match) use (&$parameters) {
                 return (empty($parameters) && !(substr($match[0], -2) === "?}")) ? $match[0] : array_shift($parameters);
@@ -168,6 +199,7 @@ class Router {
         $result = self::setupPattern($route, $path, false);
         $staticPrefix = $result["staticPrefix"];
         $pathVariables = $result["variables"];
+        // TODO remove if not used
         foreach ($pathVariables as $pathParam) {
             if ("_fragment" === $pathParam) {
                 throw new \InvalidArgumentException("Route pattern \"{$route->getPath()}\" cannot contain \"_fragment\" as a path parameter.");

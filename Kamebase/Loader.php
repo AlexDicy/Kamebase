@@ -1,9 +1,9 @@
 <?php
 
-use Kamebase\Boot;
+namespace Kamebase;
+
+use Exception;
 use Kamebase\Database\DB;
-use Kamebase\Layout\Layout;
-use Kamebase\Request;
 use Kamebase\Session\Session;
 
 /**
@@ -11,10 +11,24 @@ use Kamebase\Session\Session;
  */
 
 class Loader {
+    private static $runOnShutdown = [];
 
     public static function handle(Request $request) {
         $response = Boot::matchRoutes($request);
         $response->send();
+
+        $maxRun = 3;
+        $run = 0;
+        while (count(self::$runOnShutdown) > 0 && $run++ < $maxRun) {
+            $toRun = self::$runOnShutdown;
+            self::$runOnShutdown = [];
+            foreach ($toRun as $callable) {
+                try {
+                    $callable();
+                } catch (Exception $ignored) {
+                }
+            }
+        }
     }
 
     /**
@@ -37,6 +51,10 @@ class Loader {
             self::load($prefix . "/" . $class);
         }
     }
+
+    public static function runOnShutdown($callable) {
+        self::$runOnShutdown[] = $callable;
+    }
 }
 
 spl_autoload_register(function ($className) {
@@ -46,28 +64,32 @@ spl_autoload_register(function ($className) {
 
 Loader::load("routes");
 
-$config = Kamebase\Config::getConfig();
+$config = Config::getConfig();
+$config->preBoot();
 if ($config->requireInstallation()) {
     // manually handle installation, routers, database etc.
     $config->install();
 
 } else {
-    Loader::loadWithPrefix("Kamebase", "Boot", "Request");
-    Loader::loadWithPrefix("Kamebase/Session", "Session");
-    Loader::load("Kamebase/functions");
+    try {
+        Loader::loadWithPrefix("Kamebase", "Boot", "Request");
+        Loader::loadWithPrefix("Kamebase/Session", "Session");
+        Loader::load("Kamebase/functions");
 
-    if ($config->hasDbData()) {
-        $data = $config->getDbData();
-        DB::setConnection($data["host"], $data["user"], $data["password"], $data["database"]);
+        if ($config->hasDbData()) {
+            $data = $config->getDbData();
+            DB::setConnection($data["host"], $data["user"], $data["password"], $data["database"]);
+        }
+        $request = new Request(true);
+        $request::setMainRequest($request);
+        Session::setHandler($config->getSessionHandler());
+
+        Loader::handle($request);
+
+        Session::shutdown();
+    } catch (Exception $e) {
+        exit("<h1 style='font-family: sans-serif'>" . htmlentities($e->getMessage()) . "</h1>");
     }
-    $request = new Request(true);
-    $request::setMainRequest($request);
-    Session::setHandler($config->getSessionHandler());
-
-    //Layout::cacheTemplates();
-    Loader::handle($request);
-
-    Session::shutdown();
 }
 
 

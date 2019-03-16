@@ -19,6 +19,13 @@ class QueryResponse {
     private $rows = 0;
     private $affectedRows = 0;
     private $fields = [];
+    private $lastId = 0;
+
+    /**
+     * Populated with the first row values
+     * @var array
+     */
+    private $values;
 
     /**
      * QueryResponse constructor.
@@ -31,6 +38,7 @@ class QueryResponse {
             $this->rows = $response->num_rows;
             try {
                 $this->affectedRows = DB::connection()->affected_rows;
+                $this->lastId = DB::connection()->insert_id;
             } catch (NoDbException $e) {
             }
             $this->fields = $response->fetch_fields() ?: [];
@@ -46,6 +54,10 @@ class QueryResponse {
         $values = $this->response->fetch_array($associativeOnly ? MYSQLI_ASSOC : MYSQLI_BOTH);
 
         if (is_array($values)) {
+            // Set the first row values
+            if (!is_array($this->values)) {
+                $this->values = $values;
+            }
             return $values;
         }
         return null;
@@ -73,6 +85,13 @@ class QueryResponse {
     }
 
     /**
+     * @return int
+     */
+    public function getLastId() {
+        return $this->lastId;
+    }
+
+    /**
      * @return array
      */
     public function getFields() {
@@ -80,9 +99,11 @@ class QueryResponse {
     }
 
     public function get($index = 0) {
-        $values = $this->values(false);
-        if (is_array($values)) {
-            return $values[$index];
+        if (!is_array($this->values)) {
+            $this->values(false);
+        }
+        if (is_array($this->values)) {
+            return $this->values[$index];
         }
         return null;
     }

@@ -6,6 +6,7 @@
 namespace Kamebase\Database;
 
 
+use Kamebase\Exceptions\DbException;
 use Kamebase\Exceptions\NoDbException;
 use mysqli;
 
@@ -16,9 +17,22 @@ class DB {
      */
     protected static $connection;
 
+    /**
+     * @param $host
+     * @param $username
+     * @param $password
+     * @param $database
+     * @throws DbException
+     */
     public static function setConnection($host, $username, $password, $database) {
-        self::$connection = new mysqli($host, $username, $password, $database);
-        self::$connection->set_charset("utf8");
+        try {
+            mysqli_report(MYSQLI_REPORT_STRICT);
+            self::$connection = new mysqli($host, $username, $password, $database);
+            self::$connection->set_charset("utf8");
+            self::query("SET time_zone = '+0:00'");
+        } catch (\Exception $e) {
+            throw new DbException("Fatal error while connecting...");
+        }
     }
 
     /**

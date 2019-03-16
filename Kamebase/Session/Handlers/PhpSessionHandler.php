@@ -7,7 +7,7 @@
 namespace Kamebase\Session\Handlers;
 
 
-class PhpSessionHandler implements Handler {
+class PhpSessionHandler extends Handler {
 
     /**
      * Save a value with this key in the session data
@@ -51,6 +51,9 @@ class PhpSessionHandler implements Handler {
      * Method is run when the handler is set
      */
     public function setup() {
+        ini_set("session.gc_maxlifetime", 60 * 24 * 365); // 1 year
+        session_set_cookie_params(60 * 60 * 24 * 365); // I don't know why this is needed...
+        session_cache_expire(60 * 24 * 365);
         session_name("KamebaseID");
         session_start();
     }

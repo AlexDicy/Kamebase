@@ -588,6 +588,7 @@ class Str {
                 return self::$cache["pluralize"][$word];
             }
         }
+        return $word;
     }
 
     /**

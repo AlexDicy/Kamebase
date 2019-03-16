@@ -17,6 +17,10 @@ class Select extends QueryType {
             $sql .= " " . $this->compileWhere($sections["where"]);
         }
 
+        if (isset($sections["orderBy"]) && isset($sections["order"])) {
+            $sql .= " ORDER BY " . $this->getColumn($sections["orderBy"]) . " " . $sections["order"];
+        }
+
         return $sql . $this->getLimit($sections);
     }
 }

@@ -151,6 +151,12 @@ class Response {
     }
 
     public function setContent($content) {
+        // Most common scenario
+        if ($content instanceof \Reply) {
+            $this->contentType = "application/json";
+            $content = json_encode($content->compile());
+        }
+
         // Output as JSON
         if ($content instanceof \ArrayObject || $content instanceof \JsonSerializable || is_array($content)) {
             $this->contentType = "application/json";

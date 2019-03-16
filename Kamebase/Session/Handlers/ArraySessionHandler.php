@@ -7,7 +7,7 @@
 namespace Kamebase\Session\Handlers;
 
 
-class ArraySessionHandler implements Handler {
+class ArraySessionHandler extends Handler {
     private $array = [];
 
     /**

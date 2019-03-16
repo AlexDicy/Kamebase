@@ -5,6 +5,9 @@
 
 namespace Kamebase;
 
+use Kamebase\Exceptions\MissingParameterException;
+use Kamebase\Router\Route;
+
 class Request {
     /* @var Request */
     public static $mainRequest = null;
@@ -21,6 +24,7 @@ class Request {
     protected $host;
     protected $path;
     protected $method;
+    /* @var Route|null */
     protected $currentRoute;
 
     public function __construct($createFromGlobals = true) {
@@ -37,13 +41,27 @@ class Request {
                     $server["CONTENT_TYPE"] = $_SERVER["HTTP_CONTENT_TYPE"];
                 }
             }
+            if (Config::getConfig()->isCloudFlareEnabled() && isset($server["HTTP_CF_CONNECTING_IP"])) {
+                $server["REMOTE_ADDR"] = $server["HTTP_CF_CONNECTING_IP"];
+            }
             $this->createRequestFromFactory($_GET, $_POST, array(), $_COOKIE, $_FILES, $server);
 
-            if ($this->hasFormData()) {
+            if ($this->hasJsonData()) {
+                $data = json_decode(file_get_contents("php://input"), true);
+                if ($this->method === "POST") {
+                    $this->post = $data;
+                } else {
+                    $this->get = $data;
+                }
+            } else if ($this->hasFormData()) {
                 parse_str($this->getContent(), $data);
                 $this->post = $data;
             }
         }
+    }
+
+    protected function hasJsonData() {
+        return strpos(static::getOrDefault($this->headers, "CONTENT_TYPE"), "application/json") === 0;
     }
 
     protected function hasFormData() {
@@ -117,6 +135,14 @@ class Request {
 
     public function setRoute($route) {
         $this->currentRoute = $route;
+    }
+
+    public function getRoute() {
+        return $this->currentRoute;
+    }
+
+    public static function is(string $path) {
+        return self::$mainRequest->getRoute()->is($path);
     }
 
     public static function getOrDefault(array $array, $key, $default = null) {
@@ -236,5 +262,30 @@ class Request {
 
     public function getGet() {
         return $this->get;
+    }
+
+    /**
+     * @param $key
+     * @return mixed
+     * @throws MissingParameterException
+     */
+    public function require($key) {
+        if (isset($this->post[$key])) {
+            return $this->post[$key];
+        }
+        if (isset($this->get[$key])) {
+            return $this->get[$key];
+        }
+        throw new MissingParameterException($key);
+    }
+
+    public function get($key) {
+        if (isset($this->post[$key])) {
+            return $this->post[$key];
+        }
+        if (isset($this->get[$key])) {
+            return $this->get[$key];
+        }
+        return null;
     }
 }

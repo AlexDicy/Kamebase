@@ -5,6 +5,7 @@
 
 namespace Kamebase\Router;
 
+use Kamebase\Exceptions\ResponseException;
 use Kamebase\Request;
 use Kamebase\Session\Session;
 
@@ -111,7 +112,7 @@ class Route {
         if (in_array("GET", $methods) && !in_array("HEAD", $methods)) {
             $methods[] = "HEAD";
         }
-        $this->methods[] = $methods;
+        $this->methods = $methods;
     }
 
     public function setSettings($settings, $path) {
@@ -222,13 +223,26 @@ class Route {
         return false;
     }
 
+    public function is(string $path) {
+        return preg_match($this->getPattern()["regex"], $path);
+    }
+
+    /**
+     * @noinspection PhpDocRedundantThrowsInspection
+     *
+     * @param Request $request
+     * @return mixed|null
+     * @throws ResponseException
+     */
     public function execute(Request $request) {
         $this->getPattern();
         $this->variables = $this->parseVariables($request);
         $callable = $this->settings["action"];
 
         if (is_callable($callable)) {
-            return $callable(...array_values($this->variables));
+            $arguments = $this->variables;
+            $arguments[] = $request;
+            return $callable(...array_values($arguments));
         }
 
         if (is_string($callable)) {
@@ -284,7 +298,7 @@ class Route {
     public function getControllerParts() {
         if (!$this->controllerParts) {
             $this->controllerParts = explode("@", $this->settings["action"], 2);
-            $this->controllerParts[0] = "\controllers\\" . $this->controllerParts[0];
+            $this->controllerParts[0] = "\Controllers\\" . $this->controllerParts[0];
         }
         return $this->controllerParts;
     }
@@ -346,6 +360,7 @@ class Route {
 
 
     public static function getParameters($instance, $method, array $variables, Request $request) {
+        /** @noinspection PhpUnhandledExceptionInspection */
         $parameters = (new \ReflectionMethod($instance, $method))->getParameters();
 
         foreach ($parameters as $parameter) {

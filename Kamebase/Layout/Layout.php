@@ -14,6 +14,7 @@ class Layout {
 
     private static $styles = [];
     private static $scripts = [];
+    private static $variables = [];
     private static $extended = "";
     private static $content = "";
     private static $currentFile = "";
@@ -90,6 +91,10 @@ class Layout {
         return self::$content;
     }
 
+    public static function setContent(string $content) {
+        self::$content = $content;
+    }
+
     public static function getFilename($name) {
         return "templates/" . self::$prefix . $name . ".php";
     }
@@ -100,5 +105,13 @@ class Layout {
      */
     public static function setPrefix(string $prefix) {
         self::$prefix = $prefix;
+    }
+
+    public static function set(string $key, $value = true) {
+        self::$variables[$key] = $value;
+    }
+
+    public static function get(string $key, $default = false) {
+        return self::$variables[$key] ?? $default;
     }
 }

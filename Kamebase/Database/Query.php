@@ -13,6 +13,7 @@ use Kamebase\Database\Type\Insert;
 use Kamebase\Database\Type\QueryType;
 use Kamebase\Database\Type\Select;
 use Kamebase\Database\Type\Update;
+use Kamebase\Entity\Entity;
 use Kamebase\Exceptions\BadQueryException;
 
 class Query {
@@ -93,10 +94,16 @@ class Query {
             if (isset($where[1])) {
                 $where = [[$where[0] => $where[1]]];
             }
-        } else if (is_array($where[0][0])) { // First element is the real array
+        } else if (isset($where[0][0]) && is_array($where[0][0])) { // First element is the real array
             $where = $where[0];
         }
         $this->sections["where"] = $where;
+        return $this;
+    }
+
+    public function desc($column) {
+        $this->sections["order"] = "DESC";
+        $this->sections["orderBy"] = $column;
         return $this;
     }
 
@@ -105,6 +112,11 @@ class Query {
         return $this;
     }
 
+    /**
+     * @return QueryResponse
+     * @throws BadQueryException
+     * @throws \Kamebase\Exceptions\NoDbException
+     */
     public function execute() {
         if (is_null($this->type) || !($this->type instanceof QueryType)) {
             throw new BadQueryException("Query type is not set");

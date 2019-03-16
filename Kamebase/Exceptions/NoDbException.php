@@ -9,9 +9,9 @@ namespace Kamebase\Exceptions;
 
 use Throwable;
 
-class NoDbException extends \Exception {
+class NoDbException extends DbException {
 
-    public function __construct(string $message = "", int $code = 0, Throwable $previous = null) {
-        parent::__construct("The database is null, connection error or not set", $code, $previous);
+    public function __construct() {
+        parent::__construct("The database is null, connection error or not set");
     }
 }
