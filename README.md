@@ -44,6 +44,22 @@ Router::all("/page/{id}/section/{section?}", function ($id, $sec) {
 );
 ```
 
+## Controller example
+Create a file named `/Controller.php` in the `/Controllers` directory.
+```php
+<?php
+namespace Controllers;
+
+use Kamebase\Request;
+use Kamebase\Layout\Layout;
+
+class Controller {
+    public function index(Request $request) {
+       return Layout::load("home");
+    }
+}
+```
+
 ## Config
 Create a file named `/Config.php` in the root directory,
 the config will allow you to connect to a database.
