@@ -107,22 +107,79 @@ class Session {
     public static function logged() {
         return self::has("id");
     }
-
     public static function getLevel() {
         return self::get("user", [])["level"] ?? 0;
     }
-
+    public static function login($username, $password, $successRoute = "home", $errorRoute = "login", $table = "users") {
+        $errors = [];
+        if (strlen($username) < 4) $errors[] = Config::text("usernameOrEmail.tooShort");
+        if (strlen($password) < 8) $errors[] = Config::text("password.tooShort");
+        if (!preg_match("/^[a-z0-9_.@]+\$/i", $username)) $errors[] = Config::text("username.notValid");
+        if (empty($errors)) {
+            $data = self::tryLogin($username, $password, $table);
+            if ($data) {
+                Session::set("user", $data);
+                Session::set("id", $data["id"]);
+                Session::flash("_message.info", Config::text("account.loggedIn"));
+                return Router::toRoute($successRoute);
+            }
+            $errors[] = Config::text("account.error.notFound");
+            self::errorAndRedirect($errors, $errorRoute);
+        }
+        return self::errorAndRedirect($errors, $errorRoute);
+    }
+    public static function tryLogin($user, $pass, $table) {
+        $username = DB::escape($user);
+        $query = "SELECT * FROM `$table` WHERE (`username` = '$username' OR `email` = '$username') LIMIT 1";
+        $result = DB::query($query);
+        if ($result->num_rows == 1) {
+            $data = $result->fetch_assoc();
+            if (password_verify($pass, $data["password"])) {
+                return $data;
+            }
+        }
+        return false;
+    }
+    public static function register($username, $password, $repeatPassword, $name, $lastname, $email, $successRoute = "home", $errorRoute = "login", $table = "users") {
+        $errors = [];
+        if (strlen($username) < 4 || strlen($username) > 40) $errors[] = Config::text("username.lengthNotValid");
+        if (strlen($password) < 8 || strlen($password) > 600) $errors[] = Config::text("password.lengthNotValid");
+        if (!preg_match("/^[a-z0-9_.]+\$/i", $username)) $errors[] = Config::text("username.notValid");
+        if (strlen($email) > 255 || !preg_match("(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)", $email)) $errors[] = Config::text("email.notValid");
+        if ($password !== $repeatPassword) $errors[] = Config::text("password.noMatch");
+        if (empty($errors)) {
+            $result = self::tryRegister($username, $password, $name, $lastname, $email, $table);
+            if ($result && $data = self::tryLogin($username, $password, $table)) {
+                Session::set("user", $data);
+                Session::set("id", $data["id"]);
+                Session::flash("_message.info", Config::text("account.registered"));
+                return Router::toRoute($successRoute);
+            }
+            $errors[] = Config::text("account.error.cannotCreate");
+            self::errorAndRedirect($errors, $errorRoute);
+        }
+        return self::errorAndRedirect($errors, $errorRoute);
+    }
+    public static function tryRegister($user, $pass, $name, $lastname, $email, $table) {
+        $username = DB::escape($user);
+        $name = DB::escape($name);
+        $lastname = DB::escape($lastname);
+        $email = DB::escape($email);
+        $password = password_hash($pass, PASSWORD_DEFAULT);
+        $columns = Config::getConfig()->getUsersColumns();
+        $query = "INSERT INTO `$table` (`{$columns["username"]}`, `{$columns["name"]}`, `{$columns["lastname"]}`, `{$columns["email"]}`, `{$columns["password"]}`)
+                  VALUES ('$username', '$name', '$lastname', '$email', '$password')";
+        return DB::query($query);
+    }
     public static function changePassword($password, $repeatPassword, $routeName = "home", $table = "users") {
         $errors = [];
         if ($password !== $repeatPassword) $errors[] = Config::text("password.noMatch");
         if (strlen($password) < 8 || strlen($password) > 600) $errors[] = Config::text("password.lengthNotValid");
         if (!self::logged()) $errors[] = "You need to login to change the password";
-
         if (empty($errors)) {
             $userId = self::get("id");
             $hash = password_hash($password, PASSWORD_DEFAULT);
             $query = "UPDATE `$table` SET `password` = '$hash' WHERE `id` = '$userId'";
-
             if (DB::query($query)) {
                 Session::flash("_message.info", "Password cambiata");
                 return Router::toRoute($routeName);
