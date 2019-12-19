@@ -1,10 +1,6 @@
 # IDE files
 .idea/
 
-# Generated cache
-/Kamebase/Layout/cache/
-/Kamebase/Cacher/cache/
-
 # User data
 /assets/
 /templates/
