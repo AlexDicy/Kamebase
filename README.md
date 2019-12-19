@@ -1,13 +1,14 @@
 # Kamebase
-PHP Framework, Kamebase includes Routes, Templates, Session manager...
+PHP Framework which includes Routes and Routing, Layout loader, Session manager, Database interface and Entities models.
 
 ## Routes
 `/routes.php`
 ```php
 <?php
-use kamebase\layout\Layout;
-use kamebase\router\Router;
+use Kamebase\Layout\Layout;
+use Kamebase\Router\Router;
 
+// Only replies to GET requests
 Router::get("/", "Controller@index"); // First param: Route, Second param: function or Controller@method
 
 Router::post("/", "Controller@post");
@@ -18,7 +19,7 @@ Router::options("/", function () {
     return Layout::load("index.page");
 });
 
-Router::all("/page", "Page@show"); // This route will work on every method
+Router::all("/page", "Page@show"); // This route will work on every HTTP Method
 
 // You can use variables in the route, for a post slug you can use for example /blog/{post}
 //
@@ -45,7 +46,7 @@ Router::all("/page/{id}/section/{section?}", function ($id, $sec) {
 ```
 
 ## Controller example
-Create a file named `/Controller.php` in the `/Controllers` directory.
+Create a file named `/Controller.php` in the `/Controllers/` directory.
 ```php
 <?php
 namespace Controllers;
@@ -79,4 +80,4 @@ class Config extends \Kamebase\Config {
 }
 ```
 
-This Project doesn't use Composer, sorry.
+This project doesn't use Composer, sorry.
