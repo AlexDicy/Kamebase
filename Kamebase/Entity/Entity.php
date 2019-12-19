@@ -89,11 +89,20 @@ abstract class Entity implements \JsonSerializable {
         return new $entity($this->data[$key]);
     }
 
+    public function many($entity, $key = "") {
+        if (empty($key)) {
+            /** @noinspection PhpUnhandledExceptionInspection */
+            $key = Str::snake((new ReflectionClass($this))->getShortName()) . "_id";
+        }
+        /* @var $entity Entity */
+        return $entity::where($key, $this->data[$this->key]);
+    }
+
     // Static
 
     public static function where(...$where) {
         $entity = new static();
-        $result = Query::table($entity->table)->select()->where($where)->limit(self::LIMIT)->execute();
+        $result = Query::table($entity->table)->select()->where(...$where)->limit(self::LIMIT)->execute();
         $found = [];
 
         if ($result->success()) {
