@@ -107,9 +107,11 @@ class Session {
     public static function logged() {
         return self::has("id");
     }
+
     public static function getLevel() {
         return self::get("user", [])["level"] ?? 0;
     }
+
     public static function login($username, $password, $successRoute = "home", $errorRoute = "login", $table = "users") {
         $errors = [];
         if (strlen($username) < 4) $errors[] = Config::text("usernameOrEmail.tooShort");
@@ -128,6 +130,7 @@ class Session {
         }
         return self::errorAndRedirect($errors, $errorRoute);
     }
+
     public static function tryLogin($user, $pass, $table) {
         $username = DB::escape($user);
         $query = "SELECT * FROM `$table` WHERE (`username` = '$username' OR `email` = '$username') LIMIT 1";
@@ -140,6 +143,7 @@ class Session {
         }
         return false;
     }
+
     public static function register($username, $password, $repeatPassword, $name, $lastname, $email, $successRoute = "home", $errorRoute = "login", $table = "users") {
         $errors = [];
         if (strlen($username) < 4 || strlen($username) > 40) $errors[] = Config::text("username.lengthNotValid");
@@ -160,6 +164,7 @@ class Session {
         }
         return self::errorAndRedirect($errors, $errorRoute);
     }
+
     public static function tryRegister($user, $pass, $name, $lastname, $email, $table) {
         $username = DB::escape($user);
         $name = DB::escape($name);
@@ -171,15 +176,18 @@ class Session {
                   VALUES ('$username', '$name', '$lastname', '$email', '$password')";
         return DB::query($query);
     }
+
     public static function changePassword($password, $repeatPassword, $routeName = "home", $table = "users") {
         $errors = [];
         if ($password !== $repeatPassword) $errors[] = Config::text("password.noMatch");
         if (strlen($password) < 8 || strlen($password) > 600) $errors[] = Config::text("password.lengthNotValid");
         if (!self::logged()) $errors[] = "You need to login to change the password";
+
         if (empty($errors)) {
             $userId = self::get("id");
             $hash = password_hash($password, PASSWORD_DEFAULT);
             $query = "UPDATE `$table` SET `password` = '$hash' WHERE `id` = '$userId'";
+
             if (DB::query($query)) {
                 Session::flash("_message.info", "Password cambiata");
                 return Router::toRoute($routeName);
