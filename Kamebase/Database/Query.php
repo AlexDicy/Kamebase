@@ -91,7 +91,7 @@ class Query {
 
     public function where(...$where) {
         if (!is_array($where[0])) { // String passed
-            if (isset($where[1])) {
+            if (count($where) > 1) {
                 $where = [[$where[0] => $where[1]]];
             }
         } else if (isset($where[0][0]) && is_array($where[0][0])) { // First element is the real array
