@@ -28,7 +28,8 @@ class DB {
         try {
             mysqli_report(MYSQLI_REPORT_STRICT);
             self::$connection = new mysqli($host, $username, $password, $database);
-            self::$connection->set_charset("utf8");
+            self::$connection->options(MYSQLI_OPT_INT_AND_FLOAT_NATIVE, true);
+            self::$connection->set_charset("utf8mb4");
             self::query("SET time_zone = '+0:00'");
         } catch (\Exception $e) {
             throw new DbException("Fatal error while connecting...");
